@@ -32,6 +32,7 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
   const [realDrivingDistance, setRealDrivingDistance] = useState<string>('');
   const [realDrivingDistanceKm, setRealDrivingDistanceKm] = useState<number>(0);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
+  const [directionsUrl, setDirectionsUrl] = useState<string>('');
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -169,6 +170,18 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
             if (onDistanceUpdate) {
               onDistanceUpdate(totalDistanceKm);
             }
+
+            // Generate Google Maps directions URL
+            const origin = `${pickup[0]},${pickup[1]}`;
+            const destination = `${delivery[0]},${delivery[1]}`;
+            let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`;
+            
+            if (hub && route.length > 2) {
+              const waypoint = `${route[1][0]},${route[1][1]}`;
+              url += `&waypoints=${waypoint}`;
+            }
+            
+            setDirectionsUrl(url);
           }
         } else {
           console.warn('Directions request failed:', status);
@@ -384,11 +397,36 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
           <div className="space-y-1">
             <div>Distance: {realDrivingDistance || `${result.totalDistance} km`}</div>
             <div>Time: {result.totalTime} min</div>
-            <div>Cost: ₹{realDrivingDistanceKm > 0 ? Math.round(realDrivingDistanceKm * (result.selectedVehicle === '2W' ? 7 : result.selectedVehicle === 'Van' ? 18 : result.selectedVehicle === 'Tempo' ? 25 : 35) * (result.poolingDiscount ? (1 - result.poolingDiscount) : 1)) : result.totalCost || 0}</div>
+            <div>Cost: ₹{(() => {
+              if (realDrivingDistanceKm > 0) {
+                const ratePerKm = result.selectedVehicle === '2W' ? 7 : 
+                                 result.selectedVehicle === 'Van' ? 18 : 
+                                 result.selectedVehicle === 'Tempo' ? 25 : 35;
+                const km = realDrivingDistanceKm || 0;
+                const rate = ratePerKm || 0;
+                const baseCost = km * rate;
+                const discount = result.poolingDiscount || 0;
+                const finalCost = baseCost * (1 - discount);
+                return Math.round(finalCost);
+              }
+              return result.totalCost || 0;
+            })()}</div>
             <div>Vehicle: {result.selectedVehicle}</div>
             {result.hub && <div>Hub: {result.hub.replace('-', ' ')}</div>}
             {result.savings && <div className="text-green-400">Savings: ₹{result.savings}</div>}
             {realDrivingDistance && <div className="text-blue-400 text-xs">Real driving distance</div>}
+            {directionsUrl && (
+              <div className="mt-2">
+                <a
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-colors"
+                >
+                  Open in Google Maps
+                </a>
+              </div>
+            )}
           </div>
         </div>
       )}

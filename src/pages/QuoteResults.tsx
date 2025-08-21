@@ -32,14 +32,16 @@ const QuoteResults: React.FC = () => {
   // Update cost when real driving distance is available
   useEffect(() => {
     if (realDrivingDistance > 0 && result) {
-      const costPerKm = result.selectedVehicle === '2W' ? 7 : 
-                       result.selectedVehicle === 'Van' ? 18 : 
-                       result.selectedVehicle === 'Tempo' ? 25 : 35;
-      const baseCost = realDrivingDistance * costPerKm;
-      const finalCost = baseCost * (result.poolingDiscount ? (1 - result.poolingDiscount) : 1);
+      const ratePerKm = result.selectedVehicle === '2W' ? 7 : 
+                        result.selectedVehicle === 'Van' ? 18 : 
+                        result.selectedVehicle === 'Tempo' ? 25 : 35;
+      const km = realDrivingDistance || 0;
+      const rate = ratePerKm || 0;
+      const baseCost = km * rate;
+      const discount = result.poolingDiscount || 0;
+      const finalCost = baseCost * (1 - discount);
       setUpdatedCost(Math.round(finalCost));
     }
-  }, [realDrivingDistance, result]);
 
   useEffect(() => {
     if (!state || !state.result) {
