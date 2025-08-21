@@ -179,14 +179,16 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
           // Extract real driving distance from all legs
           if (result.routes && result.routes[0] && result.routes[0].legs) {
             const totalDistanceMeters = sumLegMeters(result.routes[0]);
+            const totalDurationSeconds = result.routes[0].legs.reduce((acc, leg) => acc + (leg?.duration?.value ?? 0), 0);
             const totalDistanceKm = totalDistanceMeters > 0 ? totalDistanceMeters / 1000 : 0;
+            const totalDurationMin = totalDurationSeconds > 0 ? totalDurationSeconds / 60 : 0;
             const distance = `${totalDistanceKm.toFixed(1)} km`;
             setRealDrivingDistance(distance);
             setRealDrivingDistanceKm(totalDistanceKm);
             
-            // Notify parent component of the real distance
+            // Notify parent component of the real distance and duration
             if (onDistanceUpdate) {
-              onDistanceUpdate(totalDistanceKm);
+              onDistanceUpdate(totalDistanceKm, totalDurationMin);
             }
 
             // Generate Google Maps directions URL
