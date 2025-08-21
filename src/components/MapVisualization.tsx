@@ -236,7 +236,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
 
       // Draw route path
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      let pathData = M ${pickupX} ${pickupY};
+      let pathData = `M ${pickupX} ${pickupY}`;
       
       if (hub && route.length > 2) {
         const [hubX, hubY] = mapCoord(route[1][0], route[1][1]);
