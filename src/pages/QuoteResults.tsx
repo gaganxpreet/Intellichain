@@ -42,6 +42,7 @@ const QuoteResults: React.FC = () => {
       const finalCost = baseCost * (1 - discount);
       setUpdatedCost(Math.round(finalCost));
     }
+  }, [realDrivingDistance, result]);
 
   useEffect(() => {
     if (!state || !state.result) {
