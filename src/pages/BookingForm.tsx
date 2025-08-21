@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Package, Truck, Calculator, ArrowRight, Info } from 'lucide-react';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { logisticsAlgorithm, geocodeAddress } from '../utils/logistics-algorithm';
+import { logisticsAlgorithm, geocodeAddress, initializeFleet, getAllHubs } from '../utils/logistics-algorithm';
 
 interface BookingFormData {
   pickup: string;
@@ -136,6 +136,7 @@ const BookingForm: React.FC = () => {
 
       console.log('Running logistics algorithm with coordinates...');
       // Run logistics algorithm
+      const fleet = initializeFleet(getAllHubs());
       const result = logisticsAlgorithm(
         pickupCoords,
         deliveryCoords,
@@ -145,7 +146,8 @@ const BookingForm: React.FC = () => {
         formData.height,
         formData.strategy,
         'cost',
-        formData.vehiclePreference || undefined
+        formData.vehiclePreference || undefined,
+        fleet
       );
 
       console.log('Algorithm result:', result);

@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import BookingForm from './pages/BookingForm';
 import QuoteResults from './pages/QuoteResults';
 import TrackingPage from './pages/TrackingPage';
+import LogisticsOptimizer from './pages/LogisticsOptimizer';
 import Header from './components/Header';
 import './styles/animations.css';
 
@@ -17,6 +18,7 @@ function App() {
           <Route path="/book" element={<BookingForm />} />
           <Route path="/quote" element={<QuoteResults />} />
           <Route path="/tracking/:ticketId" element={<TrackingPage />} />
+          <Route path="/optimizer" element={<LogisticsOptimizer />} />
         </Routes>
       </div>
     </Router>

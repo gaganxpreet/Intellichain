@@ -37,9 +37,12 @@ const LandingPage: React.FC = () => {
                   Get Quote Now
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <button className="inline-flex items-center justify-center border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:border-blue-600 hover:text-blue-600 transition-all duration-300">
-                  How It Works
-                </button>
+                <Link
+                  to="/optimizer"
+                  className="inline-flex items-center justify-center border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold text-lg hover:border-blue-600 hover:text-blue-600 transition-all duration-300"
+                >
+                  Route Optimizer
+                </Link>
               </div>
 
               <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-200">

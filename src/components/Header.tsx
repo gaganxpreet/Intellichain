@@ -40,6 +40,14 @@ const Header: React.FC = () => {
             >
               Book Shipment
             </Link>
+            <Link
+              to="/optimizer"
+              className={`font-medium transition-colors duration-200 hover:text-blue-600 ${
+                isActive('/optimizer') ? 'text-blue-600' : 'text-gray-700'
+              }`}
+            >
+              Optimizer
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -68,6 +76,13 @@ const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Book Shipment
+              </Link>
+              <Link
+                to="/optimizer"
+                className="block font-medium text-gray-700 hover:text-blue-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Optimizer
               </Link>
             </div>
           </div>
