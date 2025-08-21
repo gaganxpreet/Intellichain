@@ -25,6 +25,22 @@ const QuoteResults: React.FC = () => {
   const state = location.state as QuoteResultsState;
   const [isConfirming, setIsConfirming] = useState(false);
 
+  // State for real driving distance from Google Maps
+  const [realDrivingDistance, setRealDrivingDistance] = useState<number>(0);
+  const [updatedCost, setUpdatedCost] = useState<number>(0);
+
+  // Update cost when real driving distance is available
+  useEffect(() => {
+    if (realDrivingDistance > 0 && result) {
+      const costPerKm = result.selectedVehicle === '2W' ? 7 : 
+                       result.selectedVehicle === 'Van' ? 18 : 
+                       result.selectedVehicle === 'Tempo' ? 25 : 35;
+      const baseCost = realDrivingDistance * costPerKm;
+      const finalCost = baseCost * (result.poolingDiscount ? (1 - result.poolingDiscount) : 1);
+      setUpdatedCost(Math.round(finalCost));
+    }
+  }, [realDrivingDistance, result]);
+
   useEffect(() => {
     if (!state || !state.result) {
       navigate('/book');
@@ -121,7 +137,7 @@ const QuoteResults: React.FC = () => {
                     <div className="flex items-center justify-center mb-2">
                       <IndianRupee className="w-8 h-8 text-gray-700 mr-1" />
                       <span className="text-4xl font-bold text-gray-900">
-                        {result.totalCost}
+                        {updatedCost > 0 ? updatedCost : result.totalCost || 0}
                       </span>
                     </div>
                     <p className="text-gray-600">Total Shipping Cost</p>
@@ -370,6 +386,7 @@ const QuoteResults: React.FC = () => {
                     route={result.optimalRoute}
                     hub={result.hub}
                     result={result}
+                    onDistanceUpdate={(distanceKm) => setRealDrivingDistance(distanceKm)}
                   />
                 </div>
               </div>

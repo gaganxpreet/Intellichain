@@ -8,6 +8,7 @@ interface GoogleMapVisualizationProps {
   route: [number, number][];
   hub?: string | null;
   result?: any;
+  onDistanceUpdate?: (distanceKm: number) => void;
 }
 
 const mapContainerStyle = {
@@ -20,7 +21,8 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
   delivery, 
   route, 
   hub, 
-  result 
+  result,
+  onDistanceUpdate
 }) => {
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [directionsResponse, setDirectionsResponse] = useState<google.maps.DirectionsResult | null>(null);
@@ -28,6 +30,7 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [realDrivingDistance, setRealDrivingDistance] = useState<string>('');
+  const [realDrivingDistanceKm, setRealDrivingDistanceKm] = useState<number>(0);
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -154,10 +157,18 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
         if (status === 'OK' && result) {
           setDirectionsResponse(result);
           
-          // Extract real driving distance from the first leg
-          if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
-            const distance = result.routes[0].legs[0].distance?.text || '';
+          // Extract real driving distance from all legs
+          if (result.routes && result.routes[0] && result.routes[0].legs) {
+            const totalDistanceMeters = result.routes[0].legs.reduce((acc, leg) => acc + (leg.distance?.value || 0), 0);
+            const totalDistanceKm = totalDistanceMeters / 1000;
+            const distance = `${totalDistanceKm.toFixed(1)} km`;
             setRealDrivingDistance(distance);
+            setRealDrivingDistanceKm(totalDistanceKm);
+            
+            // Notify parent component of the real distance
+            if (onDistanceUpdate) {
+              onDistanceUpdate(totalDistanceKm);
+            }
           }
         } else {
           console.warn('Directions request failed:', status);
@@ -373,7 +384,7 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
           <div className="space-y-1">
             <div>Distance: {realDrivingDistance || `${result.totalDistance} km`}</div>
             <div>Time: {result.totalTime} min</div>
-            <div>Cost: ₹{result.totalCost}</div>
+            <div>Cost: ₹{realDrivingDistanceKm > 0 ? Math.round(realDrivingDistanceKm * (result.selectedVehicle === '2W' ? 7 : result.selectedVehicle === 'Van' ? 18 : result.selectedVehicle === 'Tempo' ? 25 : 35) * (result.poolingDiscount ? (1 - result.poolingDiscount) : 1)) : result.totalCost || 0}</div>
             <div>Vehicle: {result.selectedVehicle}</div>
             {result.hub && <div>Hub: {result.hub.replace('-', ' ')}</div>}
             {result.savings && <div className="text-green-400">Savings: ₹{result.savings}</div>}
