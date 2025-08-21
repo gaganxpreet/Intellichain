@@ -27,6 +27,8 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
   const [showAlgorithmRoute, setShowAlgorithmRoute] = useState(true);
   const [selectedMarker, setSelectedMarker] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [realDrivingDistance, setRealDrivingDistance] = useState<string>('');
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -39,6 +41,10 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
   const onLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
     
+    // Clear existing markers
+    markers.forEach(marker => marker.setMap(null));
+    setMarkers([]);
+    
     // Fit bounds to show all points
     const bounds = new window.google.maps.LatLngBounds();
     bounds.extend({ lat: pickup[0], lng: pickup[1] });
@@ -49,9 +55,76 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
     }
     
     map.fitBounds(bounds, { padding: 50 });
+    
+    // Create markers
+    createMapMarkers(map);
   }, [pickup, delivery, route, hub]);
 
+  const createMapMarkers = (map: google.maps.Map) => {
+    const newMarkers: google.maps.Marker[] = [];
+    
+    // Pickup marker (green)
+    const pickupMarker = new google.maps.Marker({
+      position: { lat: pickup[0], lng: pickup[1] },
+      map: map,
+      title: 'Pickup Location',
+      icon: {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#10B981" stroke="#FFFFFF" stroke-width="2"/>
+            <circle cx="12" cy="9" r="2.5" fill="#FFFFFF"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(32, 32),
+        anchor: new google.maps.Point(16, 32)
+      }
+    });
+    newMarkers.push(pickupMarker);
+    
+    // Hub marker (blue) - if hub exists and route has more than 2 points
+    if (hub && route.length > 2) {
+      const hubMarker = new google.maps.Marker({
+        position: { lat: route[1][0], lng: route[1][1] },
+        map: map,
+        title: `${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub`,
+        icon: {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#3B82F6" stroke="#FFFFFF" stroke-width="2"/>
+              <circle cx="12" cy="9" r="2.5" fill="#FFFFFF"/>
+            </svg>
+          `),
+          scaledSize: new google.maps.Size(32, 32),
+          anchor: new google.maps.Point(16, 32)
+        }
+      });
+      newMarkers.push(hubMarker);
+    }
+    
+    // Delivery marker (red)
+    const deliveryMarker = new google.maps.Marker({
+      position: { lat: delivery[0], lng: delivery[1] },
+      map: map,
+      title: 'Delivery Location',
+      icon: {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#EF4444" stroke="#FFFFFF" stroke-width="2"/>
+            <circle cx="12" cy="9" r="2.5" fill="#FFFFFF"/>
+          </svg>
+        `),
+        scaledSize: new google.maps.Size(32, 32),
+        anchor: new google.maps.Point(16, 32)
+      }
+    });
+    newMarkers.push(deliveryMarker);
+    
+    setMarkers(newMarkers);
+  };
   const onUnmount = useCallback(() => {
+    // Clean up markers
+    markers.forEach(marker => marker.setMap(null));
+    setMarkers([]);
     setMap(null);
   }, []);
 
@@ -80,6 +153,12 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
       (result, status) => {
         if (status === 'OK' && result) {
           setDirectionsResponse(result);
+          
+          // Extract real driving distance from the first leg
+          if (result.routes && result.routes[0] && result.routes[0].legs && result.routes[0].legs[0]) {
+            const distance = result.routes[0].legs[0].distance?.text || '';
+            setRealDrivingDistance(distance);
+          }
         } else {
           console.warn('Directions request failed:', status);
         }
@@ -292,12 +371,13 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
       {result && (
         <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white p-3 rounded-lg text-sm">
           <div className="space-y-1">
-            <div>Distance: {result.totalDistance} km</div>
+            <div>Distance: {realDrivingDistance || `${result.totalDistance} km`}</div>
             <div>Time: {result.totalTime} min</div>
             <div>Cost: ₹{result.totalCost}</div>
             <div>Vehicle: {result.selectedVehicle}</div>
             {result.hub && <div>Hub: {result.hub.replace('-', ' ')}</div>}
             {result.savings && <div className="text-green-400">Savings: ₹{result.savings}</div>}
+            {realDrivingDistance && <div className="text-blue-400 text-xs">Real driving distance</div>}
           </div>
         </div>
       )}
