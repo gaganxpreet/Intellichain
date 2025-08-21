@@ -73,7 +73,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
             // Add route line
             const routeCoordinates = route.map(coord => [coord[1], coord[0]]); // Convert to [lng, lat]
             console.log('Route coordinates for map:', routeCoordinates);
-          
+            
             map.addSource('route', {
               type: 'geojson',
               data: {
@@ -123,30 +123,30 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
               color: '#10B981',
               scale: 1.2
             })
-              .setLngLat([pickup[1], pickup[0]])
-              .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
-                <div class="p-3">
-                  <div class="font-semibold text-green-800 mb-2">📦 Pickup Location</div>
-                  <div class="text-sm text-gray-600">Coordinates: ${pickup[0].toFixed(6)}, ${pickup[1].toFixed(6)}</div>
-                  ${result?.vehicles?.pickupVehicle ? `<div class="text-sm text-blue-600 mt-1">Vehicle: ${result.vehicles.pickupVehicle}</div>` : ''}
-                </div>
-              `))
-              .addTo(map);
+            .setLngLat([pickup[1], pickup[0]])
+            .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
+              <div>
+                📦 Pickup Location<br>
+                Coordinates: ${pickup[0].toFixed(6)}, ${pickup[1].toFixed(6)}<br>
+                ${result?.vehicles?.pickupVehicle ? Vehicle: ${result.vehicles.pickupVehicle} : ''}
+              </div>
+            `))
+            .addTo(map);
 
             // Add delivery marker
             const deliveryMarker = new mapboxgl.default.Marker({ 
               color: '#EF4444',
               scale: 1.2
             })
-              .setLngLat([delivery[1], delivery[0]])
-              .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
-                <div class="p-3">
-                  <div class="font-semibold text-red-800 mb-2">🎯 Delivery Location</div>
-                  <div class="text-sm text-gray-600">Coordinates: ${delivery[0].toFixed(6)}, ${delivery[1].toFixed(6)}</div>
-                  ${result?.vehicles?.deliveryVehicle ? `<div class="text-sm text-blue-600 mt-1">Vehicle: ${result.vehicles.deliveryVehicle}</div>` : ''}
-                </div>
-              `))
-              .addTo(map);
+            .setLngLat([delivery[1], delivery[0]])
+            .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
+              <div>
+                🎯 Delivery Location<br>
+                Coordinates: ${delivery[0].toFixed(6)}, ${delivery[1].toFixed(6)}<br>
+                ${result?.vehicles?.deliveryVehicle ? Vehicle: ${result.vehicles.deliveryVehicle} : ''}
+              </div>
+            `))
+            .addTo(map);
 
             // Add hub marker if exists
             if (hub && route.length > 2) {
@@ -156,16 +156,16 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
                 color: '#3B82F6',
                 scale: 1.5
               })
-                .setLngLat([hubCoord[1], hubCoord[0]])
-                .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
-                  <div class="p-3">
-                    <div class="font-semibold text-blue-800 mb-2">🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub</div>
-                    <div class="text-sm text-gray-600">Coordinates: ${hubCoord[0].toFixed(6)}, ${hubCoord[1].toFixed(6)}</div>
-                    ${result?.distancesKm?.pickupLeg ? `<div class="text-sm text-green-600 mt-1">From Pickup: ${result.distancesKm.pickupLeg} km</div>` : ''}
-                    ${result?.distancesKm?.deliveryLeg ? `<div class="text-sm text-orange-600">To Delivery: ${result.distancesKm.deliveryLeg} km</div>` : ''}
-                  </div>
-                `))
-                .addTo(map);
+              .setLngLat([hubCoord[1], hubCoord[0]])
+              .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
+                <div>
+                  🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub<br>
+                  Coordinates: ${hubCoord[0].toFixed(6)}, ${hubCoord[1].toFixed(6)}<br>
+                  ${result?.distancesKm?.pickupLeg ? From Pickup: ${result.distancesKm.pickupLeg} km : ''}<br>
+                  ${result?.distancesKm?.deliveryLeg ? To Delivery: ${result.distancesKm.deliveryLeg} km : ''}
+                </div>
+              `))
+              .addTo(map);
             }
 
             // Add click handlers for interactivity
@@ -174,11 +174,11 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
               new mapboxgl.default.Popup({ offset: 25 })
                 .setLngLat(coordinates)
                 .setHTML(`
-                  <div class="p-3">
-                    <div class="font-semibold text-orange-800 mb-2">🛣️ Route Point</div>
-                    <div class="text-sm text-gray-600">Coordinates: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)}</div>
-                    <div class="text-sm text-blue-600 mt-1">Total Distance: ${result?.totalDistance || 'N/A'} km</div>
-                    <div class="text-sm text-green-600">Estimated Time: ${result?.totalTime || 'N/A'} min</div>
+                  <div>
+                    🛣 Route Point<br>
+                    Coordinates: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)}<br>
+                    Total Distance: ${result?.totalDistance || 'N/A'} km<br>
+                    Estimated Time: ${result?.totalTime || 'N/A'} min
                   </div>
                 `)
                 .addTo(map);
@@ -236,7 +236,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
 
       // Draw route path
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      let pathData = `M ${pickupX} ${pickupY}`;
+      let pathData = M ${pickupX} ${pickupY};
       
       if (hub && route.length > 2) {
         const [hubX, hubY] = mapCoord(route[1][0], route[1][1]);
@@ -261,7 +261,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
         hubLabel.setAttribute('font-size', '14');
         hubLabel.setAttribute('font-weight', 'bold');
         hubLabel.setAttribute('fill', 'white');
-        hubLabel.textContent = `🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub`;
+        hubLabel.textContent = 🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub;
         svg.appendChild(hubLabel);
       } else {
         pathData += ` L ${deliveryX} ${deliveryY}`;
@@ -276,7 +276,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
       
       // Add animation
       const pathLength = path.getTotalLength();
-      path.style.strokeDasharray = `${pathLength} ${pathLength}`;
+      path.style.strokeDasharray = ${pathLength} ${pathLength};
       path.style.strokeDashoffset = pathLength.toString();
       path.style.animation = 'dash 2s ease-in-out forwards';
 
@@ -380,96 +380,80 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
   };
 
   return (
-    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'w-full h-full'}`}>
-      <div
-        ref={mapRef} 
-        className="w-full h-full rounded-lg relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900"
-      >
-        {/* Legend */}
-        <div className="absolute top-4 left-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 shadow-lg z-10">
-          <div className="flex items-center space-x-4 text-sm">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-white">📦 Pickup</span>
+    <div className={relative bg-gray-900 rounded-lg overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : 'h-96'}}>
+      {/* Map Container */}
+      <div ref={mapRef} className="w-full h-full" />
+
+      {/* Legend */}
+      <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white p-3 rounded-lg text-sm">
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span>📦 Pickup</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+            <span>🎯 Delivery</span>
+          </div>
+          {hub && (
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+              <span>🏢 Hub</span>
             </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-              <span className="text-white">🎯 Delivery</span>
-            </div>
-            {hub && (
-              <div className="flex items-center">
-                <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                <span className="text-white">🏢 Hub</span>
-              </div>
-            )}
+          )}
+        </div>
+      </div>
+
+      {/* Route Info */}
+      {result && (
+        <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white p-3 rounded-lg text-sm">
+          <div className="space-y-1">
+            <div>Distance: {result.totalDistance} km</div>
+            <div>Time: {result.totalTime} min</div>
+            <div>Cost: ₹{result.totalCost}</div>
+            <div>Vehicle: {result.selectedVehicle}</div>
           </div>
         </div>
+      )}
 
-        {/* Route Info */}
-        {result && (
-          <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-sm rounded-lg p-3 shadow-lg z-10 text-white text-sm">
-            <div className="space-y-1">
-              <div>Distance: <span className="font-semibold text-orange-400">{result.totalDistance} km</span></div>
-              <div>Time: <span className="font-semibold text-green-400">{result.totalTime} min</span></div>
-              <div>Cost: <span className="font-semibold text-blue-400">₹{result.totalCost}</span></div>
-              <div>Vehicle: <span className="font-semibold text-purple-400">{result.selectedVehicle}</span></div>
-            </div>
+      {/* Custom Controls */}
+      {!mapInstanceRef.current && (
+        <div className="absolute top-4 right-4 flex flex-col space-y-2">
+          <button onClick={zoomIn} className="bg-white p-2 rounded shadow hover:bg-gray-100">
+            <ZoomIn size={16} />
+          </button>
+          <button onClick={zoomOut} className="bg-white p-2 rounded shadow hover:bg-gray-100">
+            <ZoomOut size={16} />
+          </button>
+          <button onClick={fitBounds} className="bg-white p-2 rounded shadow hover:bg-gray-100">
+            <Navigation size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Fullscreen Toggle */}
+      <button
+        onClick={toggleFullscreen}
+        className="absolute bottom-4 right-4 bg-white p-2 rounded shadow hover:bg-gray-100"
+      >
+        <Maximize2 size={16} />
+      </button>
+
+      {/* Loading Indicator */}
+      {!mapLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75">
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+            <div>Loading Interactive Map...</div>
           </div>
-        )}
-
-        {/* Custom Controls */}
-        {!mapInstanceRef.current && (
-          <div className="absolute bottom-4 right-4 flex flex-col space-y-2 z-10">
-            <button
-              onClick={zoomIn}
-              className="bg-white/90 hover:bg-white p-2 rounded-lg shadow-lg transition-colors"
-              title="Zoom In"
-            >
-              <ZoomIn className="w-4 h-4 text-gray-700" />
-            </button>
-            <button
-              onClick={zoomOut}
-              className="bg-white/90 hover:bg-white p-2 rounded-lg shadow-lg transition-colors"
-              title="Zoom Out"
-            >
-              <ZoomOut className="w-4 h-4 text-gray-700" />
-            </button>
-            <button
-              onClick={fitBounds}
-              className="bg-white/90 hover:bg-white p-2 rounded-lg shadow-lg transition-colors"
-              title="Fit to Route"
-            >
-              <Navigation className="w-4 h-4 text-gray-700" />
-            </button>
-          </div>
-        )}
-
-        {/* Fullscreen Toggle */}
-        <button
-          onClick={toggleFullscreen}
-          className="absolute bottom-4 left-4 bg-white/90 hover:bg-white p-2 rounded-lg shadow-lg transition-colors z-10"
-          title={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-        >
-          <Maximize2 className="w-4 h-4 text-gray-700" />
-        </button>
-
-        {/* Loading Indicator */}
-        {!mapLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-800/50 z-20">
-            <div className="text-center text-white">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
-              <div>Loading Interactive Map...</div>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Fullscreen Close Button */}
       {isFullscreen && (
         <button
           onClick={toggleFullscreen}
-          className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg z-50 transition-colors"
-          title="Exit Fullscreen"
+          className="absolute top-4 right-4 bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
         >
           ✕
         </button>
