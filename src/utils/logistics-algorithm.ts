@@ -74,7 +74,7 @@ const HANDLING_MIN = 10; // hub handling time in minutes
 // Google Maps Geocoding with comprehensive error handling
 export async function geocodeAddress(address: string): Promise<[number, number] | null> {
   try {
-    const apiKey = 'AIzaSyDHZ8vNg7vF2K3lM9xQ4pR6tE8wY1sA2bC';
+    const apiKey = 'AIzaSyCCO9SNLjp39W_jqN749-wwFaHA2s6svZ8';
     if (!apiKey) {
       console.error('Google Maps API key not found in environment variables');
       return null;
