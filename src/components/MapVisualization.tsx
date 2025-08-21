@@ -470,5 +470,3 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
 };
 
 export default MapVisualization;
-
-export default MapVisualization
