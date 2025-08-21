@@ -317,9 +317,10 @@ const LogisticsOptimizer: React.FC = () => {
                         value={formData.strategy}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        style={{ color: '#fff' }}
                       >
-                        <option value="auto">Auto Optimize (Recommended)</option>
-                        <option value="p2p">Point-to-Point Direct</option>
+                        <option value="auto" style={{ color: '#000', backgroundColor: '#fff' }}>Auto Optimize (Recommended)</option>
+                        <option value="p2p" style={{ color: '#000', backgroundColor: '#fff' }}>Point-to-Point Direct</option>
                       </select>
                     </div>
 
@@ -330,9 +331,10 @@ const LogisticsOptimizer: React.FC = () => {
                         value={formData.optimizeBy}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        style={{ color: '#fff' }}
                       >
-                        <option value="cost">Cost Efficiency</option>
-                        <option value="time">Time Efficiency</option>
+                        <option value="cost" style={{ color: '#000', backgroundColor: '#fff' }}>Cost Efficiency</option>
+                        <option value="time" style={{ color: '#000', backgroundColor: '#fff' }}>Time Efficiency</option>
                       </select>
                     </div>
 
@@ -343,12 +345,13 @@ const LogisticsOptimizer: React.FC = () => {
                         value={formData.vehiclePreference}
                         onChange={handleInputChange}
                         className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        style={{ color: '#fff' }}
                       >
-                        <option value="">Auto Select</option>
-                        <option value="2W">2-Wheeler</option>
-                        <option value="Van">Van</option>
-                        <option value="Tempo">Tempo</option>
-                        <option value="Truck">Truck</option>
+                        <option value="" style={{ color: '#000', backgroundColor: '#fff' }}>Auto Select</option>
+                        <option value="2W" style={{ color: '#000', backgroundColor: '#fff' }}>2-Wheeler</option>
+                        <option value="Van" style={{ color: '#000', backgroundColor: '#fff' }}>Van</option>
+                        <option value="Tempo" style={{ color: '#000', backgroundColor: '#fff' }}>Tempo</option>
+                        <option value="Truck" style={{ color: '#000', backgroundColor: '#fff' }}>Truck</option>
                       </select>
                     </div>
                   </div>
