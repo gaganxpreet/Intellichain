@@ -20,9 +20,9 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
 
     const initializeMap = async () => {
       try {
-        const mapboxToken = 'pk.eyJ1IjoiaW50ZWxsaWNoYWluIiwiYSI6ImNtNXNkZjJhZjBhZGsyanM5ZGZqZGNqZGcifQ.example_token_here';
+        const mapboxToken = 'pk.eyJ1IjoiZ2FnYW54cHJlZXQxOSIsImEiOiJjbWU4dXhlbmgwaGRxMmpwd2R5cnRmMGtnIn0.F21k5s2caADXz9QqFdVggA';
         
-        if (!mapboxToken || mapboxToken.includes('example_token_here')) {
+        if (!mapboxToken) {
           console.warn('Mapbox token not configured, using fallback visualization');
           createFallbackVisualization();
           return;
