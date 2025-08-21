@@ -261,7 +261,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
         hubLabel.setAttribute('font-size', '14');
         hubLabel.setAttribute('font-weight', 'bold');
         hubLabel.setAttribute('fill', 'white');
-        hubLabel.textContent = 🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub;
+        hubLabel.textContent = `🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub`;
         svg.appendChild(hubLabel);
       } else {
         pathData += ` L ${deliveryX} ${deliveryY}`;
