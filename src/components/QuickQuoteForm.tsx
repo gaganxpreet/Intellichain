@@ -71,14 +71,15 @@ const QuickQuoteForm: React.FC = () => {
               value={formData.vehicleType}
               onChange={handleInputChange}
               className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 appearance-none bg-white"
+              style={{ color: '#000', backgroundColor: '#fff' }}
               required
             >
-              <option value="">Select Vehicle Type</option>
-              <option value="2W">2-Wheeler</option>
-              <option value="Van">Van</option>
-              <option value="Tempo">Tempo</option>
-              <option value="Truck">Truck</option>
-              <option value="auto">Let Us Optimize</option>
+              <option value="" style={{ color: '#000', backgroundColor: '#fff' }}>Select Vehicle Type</option>
+              <option value="2W" style={{ color: '#000', backgroundColor: '#fff' }}>2-Wheeler</option>
+              <option value="Van" style={{ color: '#000', backgroundColor: '#fff' }}>Van</option>
+              <option value="Tempo" style={{ color: '#000', backgroundColor: '#fff' }}>Tempo</option>
+              <option value="Truck" style={{ color: '#000', backgroundColor: '#fff' }}>Truck</option>
+              <option value="auto" style={{ color: '#000', backgroundColor: '#fff' }}>Let Us Optimize</option>
             </select>
           </div>
         </div>

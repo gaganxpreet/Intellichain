@@ -461,18 +461,19 @@ const BookingForm: React.FC = () => {
                 value={formData.vehiclePreference}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                style={{ color: '#000', backgroundColor: '#fff' }}
               >
-                <option value="">Suggest for me</option>
-                <option value="2W" disabled={!feasibleVehicles.includes('2W')}>
+                <option value="" style={{ color: '#000', backgroundColor: '#fff' }}>Suggest for me</option>
+                <option value="2W" disabled={!feasibleVehicles.includes('2W')} style={{ color: '#000', backgroundColor: '#fff' }}>
                   2-Wheeler {!feasibleVehicles.includes('2W') && '(Not suitable)'}
                 </option>
-                <option value="Van" disabled={!feasibleVehicles.includes('Van')}>
+                <option value="Van" disabled={!feasibleVehicles.includes('Van')} style={{ color: '#000', backgroundColor: '#fff' }}>
                   Van {!feasibleVehicles.includes('Van') && '(Not suitable)'}
                 </option>
-                <option value="Tempo" disabled={!feasibleVehicles.includes('Tempo')}>
+                <option value="Tempo" disabled={!feasibleVehicles.includes('Tempo')} style={{ color: '#000', backgroundColor: '#fff' }}>
                   Tempo {!feasibleVehicles.includes('Tempo') && '(Not suitable)'}
                 </option>
-                <option value="Truck" disabled={!feasibleVehicles.includes('Truck')}>
+                <option value="Truck" disabled={!feasibleVehicles.includes('Truck')} style={{ color: '#000', backgroundColor: '#fff' }}>
                   Truck {!feasibleVehicles.includes('Truck') && '(Not suitable)'}
                 </option>
               </select>
