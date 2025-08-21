@@ -128,7 +128,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
               <div>
                 📦 Pickup Location<br>
                 Coordinates: ${pickup[0].toFixed(6)}, ${pickup[1].toFixed(6)}<br>
-                ${result?.vehicles?.pickupVehicle ? Vehicle: ${result.vehicles.pickupVehicle} : ''}
+                ${result?.vehicles?.pickupVehicle ? `Vehicle: ${result.vehicles.pickupVehicle}` : ''}
               </div>
             `))
             .addTo(map);
