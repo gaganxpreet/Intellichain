@@ -183,9 +183,9 @@ const LogisticsOptimizer: React.FC = () => {
           </div>
 
           <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
-          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8">
             {/* Optimizer Form */}
-            <div className="lg:col-span-1">
+              <div className="lg:col-span-1">
               <div className="bg-white/10 backdrop-blur-lg rounded-3xl border border-white/20 p-8 shadow-2xl">
                 <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
                   <Target className="w-6 h-6 text-blue-400 mr-2" />
@@ -387,10 +387,10 @@ const LogisticsOptimizer: React.FC = () => {
                   </div>
                 )}
               </div>
-            </div>
+              </div>
 
-            {/* Results */}
-            <div className="lg:col-span-2">
+              {/* Results */}
+              <div className="lg:col-span-2">
               {result ? (
                 <div className="space-y-6">
                   {/* Results Summary */}
@@ -572,10 +572,10 @@ const LogisticsOptimizer: React.FC = () => {
                   </p>
                 </div>
               )}
+              </div>
             </div>
-          </div>
+          </LoadScript>
         </div>
-        </LoadScript>
       </div>
     </div>
   );
