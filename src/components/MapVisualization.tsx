@@ -20,15 +20,17 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
 
     const initializeMap = async () => {
       try {
-        const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+        const mapboxToken = 'pk.eyJ1IjoiaW50ZWxsaWNoYWluIiwiYSI6ImNtNXNkZjJhZjBhZGsyanM5ZGZqZGNqZGcifQ.example_token_here';
         
-        if (!mapboxToken || mapboxToken === 'your_mapbox_token_here') {
+        if (!mapboxToken || mapboxToken.includes('example_token_here')) {
           console.warn('Mapbox token not configured, using fallback visualization');
           createFallbackVisualization();
           return;
         }
 
         try {
+          console.log('Initializing Mapbox with token:', mapboxToken.substring(0, 20) + '...');
+          
           // Dynamically import Mapbox GL JS
           const mapboxgl = await import('mapbox-gl');
           mapboxgl.default.accessToken = mapboxToken;
@@ -41,6 +43,8 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
           // Calculate bounds for the route
           const bounds = new mapboxgl.default.LngLatBounds();
           route.forEach(coord => bounds.extend([coord[1], coord[0]])); // Note: Mapbox uses [lng, lat]
+
+          console.log('Creating map with bounds:', bounds);
 
           // Create map
           const map = new mapboxgl.default.Map({
@@ -62,7 +66,11 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
 
           // Add error handler for map
           map.on('error', (e) => {
-            console.warn('Mapbox error, falling back to SVG visualization:', e.error);
+            console.error('Mapbox error:', e.error);
+            if (e.error?.message?.includes('401') || e.error?.message?.includes('Unauthorized')) {
+              console.error('Mapbox token is invalid or expired');
+              alert('Map service unavailable. Using fallback visualization.');
+            }
             createFallbackVisualization();
           });
 

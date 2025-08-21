@@ -103,17 +103,36 @@ const BookingForm: React.FC = () => {
       console.log('Pickup address:', formData.pickup);
       console.log('Delivery address:', formData.delivery);
       
+      // Validate addresses before geocoding
+      if (!formData.pickup.trim() || !formData.delivery.trim()) {
+        alert('Please enter both pickup and delivery addresses.');
+        return;
+      }
+
+      if (formData.weight <= 0 || formData.length <= 0 || formData.width <= 0 || formData.height <= 0) {
+        alert('Please enter valid cargo dimensions and weight.');
+        return;
+      }
+
       // Geocode addresses
+      console.log('Geocoding pickup address...');
       const pickupCoords = await geocodeAddress(formData.pickup);
+      
+      if (!pickupCoords) {
+        setIsLoading(false);
+        return; // Error already shown in geocodeAddress
+      }
+
+      console.log('Geocoding delivery address...');
       const deliveryCoords = await geocodeAddress(formData.delivery);
+
+      if (!deliveryCoords) {
+        setIsLoading(false);
+        return;
+      }
 
       console.log('Geocoded pickup coordinates:', pickupCoords);
       console.log('Geocoded delivery coordinates:', deliveryCoords);
-
-      if (!pickupCoords || !deliveryCoords) {
-        alert('Unable to find one or both locations. Please check the addresses and try again. Make sure to include city/area details.');
-        return;
-      }
 
       console.log('Running logistics algorithm with coordinates...');
       // Run logistics algorithm
@@ -130,6 +149,11 @@ const BookingForm: React.FC = () => {
       );
 
       console.log('Algorithm result:', result);
+
+      if (!result || result.message === 'Shipment not possible') {
+        alert('Unable to find a suitable route for your shipment. Please check cargo specifications.');
+        return;
+      }
 
       // Navigate to quote results with the algorithm result
       navigate('/quote', { 

@@ -74,7 +74,7 @@ const HANDLING_MIN = 10; // hub handling time in minutes
 // Google Maps Geocoding with comprehensive error handling
 export async function geocodeAddress(address: string): Promise<[number, number] | null> {
   try {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const apiKey = 'AIzaSyDHZ8vNg7vF2K3lM9xQ4pR6tE8wY1sA2bC';
     if (!apiKey) {
       console.error('Google Maps API key not found in environment variables');
       return null;
@@ -83,7 +83,9 @@ export async function geocodeAddress(address: string): Promise<[number, number] 
     console.log('Geocoding address:', address);
     
     const encodedAddress = encodeURIComponent(address.trim());
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&region=in&key=${apiKey}`;
+    
+    console.log('Geocoding URL:', url);
     
     const response = await fetch(url);
     
@@ -101,16 +103,26 @@ export async function geocodeAddress(address: string): Promise<[number, number] 
       const coordinates: [number, number] = [location.lat, location.lng];
       console.log('Successfully geocoded coordinates:', coordinates);
       return coordinates;
+    } else if (data.status === 'REQUEST_DENIED') {
+      console.error('Google Maps API request denied:', data.error_message);
+      alert('Google Maps API access denied. Please check API key and billing.');
+      return null;
+    } else if (data.status === 'OVER_QUERY_LIMIT') {
+      console.error('Google Maps API quota exceeded');
+      alert('Google Maps API quota exceeded. Please try again later.');
+      return null;
     } else {
       console.warn('Geocoding failed:', {
         status: data.status,
         error_message: data.error_message,
         results_count: data.results?.length || 0
       });
+      alert(`Geocoding failed: ${data.status}. Please check the address format.`);
       return null;
     }
   } catch (error) {
     console.error('Geocoding error:', error);
+    alert('Network error during geocoding. Please check your internet connection.');
     return null;
   }
 }
