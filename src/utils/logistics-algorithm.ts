@@ -1,5 +1,5 @@
-// Logistics Algorithm - JavaScript Implementation
-// Based on the provided Python algorithm
+// Complete Logistics Algorithm Implementation
+// Based on the provided Python algorithm with full functionality
 
 // Helper: Haversine formula for distance calculation
 function haversine(coord1: [number, number], coord2: [number, number]): number {
@@ -18,113 +18,194 @@ function haversine(coord1: [number, number], coord2: [number, number]): number {
   return R * c; // distance in km
 }
 
-// Hub coordinates - Delhi logistics hubs
+// Delhi logistics hubs with precise coordinates
 const HUBS: Record<string, [number, number]> = {
-  north: [28.832652, 77.099613],
-  west: [28.685020, 77.098174],
-  south: [28.513000, 77.269200],
-  east: [28.639425, 77.310904],
-  central: [28.700257, 77.167209],
+  'north-delhi': [28.832652, 77.099613],
+  'west-delhi': [28.685020, 77.098174],
+  'south-delhi': [28.513000, 77.269200],
+  'east-delhi': [28.639425, 77.310904],
+  'central-delhi': [28.700257, 77.167209],
   'micro-mundka': [28.7744, 77.0405],
-  'micro-okhla': [28.5358, 77.2764]
+  'micro-okhla': [28.5358, 77.2764],
+  'gurgaon-hub': [28.4595, 77.0266],
+  'noida-hub': [28.5355, 77.3910],
+  'faridabad-hub': [28.4089, 77.3178],
+  'ghaziabad-hub': [28.6692, 77.4538]
 };
 
-// Vehicle specifications
+// Complete vehicle specifications
 const VEHICLES = {
   '2W': {
     speed: 25,
     maxDist: 9,
     maxWeight: 5,
     maxDimensions: [30, 30, 15],
-    maxVolume: 13500
+    maxVolume: 13500,
+    costPerKm: 7.0
   },
   'Van': {
     speed: 35,
     maxDist: 30,
     maxWeight: 750,
     maxDimensions: [120, 100, 100],
-    maxVolume: 1200000
+    maxVolume: 1200000,
+    costPerKm: 18.0
   },
   'Tempo': {
     speed: 40,
     maxDist: 70,
     maxWeight: 1200,
     maxDimensions: [180, 140, 130],
-    maxVolume: 3276000
+    maxVolume: 3276000,
+    costPerKm: 25.0
   },
   'Truck': {
     speed: 45,
     maxDist: 100,
     maxWeight: 5000,
     maxDimensions: [300, 200, 200],
-    maxVolume: 12000000
+    maxVolume: 12000000,
+    costPerKm: 35.0
   }
-};
-
-// Cost per km
-const COST_PER_KM = {
-  '2W': 7.0,
-  'Van': 18.0,
-  'Tempo': 25.0,
-  'Truck': 35.0
 };
 
 const HANDLING_MIN = 10; // hub handling time in minutes
 
+// Google Maps Geocoding with comprehensive error handling
+export async function geocodeAddress(address: string): Promise<[number, number] | null> {
+  try {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      console.error('Google Maps API key not found in environment variables');
+      return null;
+    }
+
+    console.log('Geocoding address:', address);
+    
+    const encodedAddress = encodeURIComponent(address.trim());
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error('Geocoding HTTP error:', response.status, response.statusText);
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    console.log('Geocoding API response:', data);
+    
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
+      const location = data.results[0].geometry.location;
+      const coordinates: [number, number] = [location.lat, location.lng];
+      console.log('Successfully geocoded coordinates:', coordinates);
+      return coordinates;
+    } else {
+      console.warn('Geocoding failed:', {
+        status: data.status,
+        error_message: data.error_message,
+        results_count: data.results?.length || 0
+      });
+      return null;
+    }
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    return null;
+  }
+}
+
+// Calculate cargo volume
 function calcVolume(l: number, w: number, h: number): number {
   return l * w * h;
 }
 
+// Get feasible vehicle types based on cargo specifications
 function getFeasibleVehicleTypes(loadWeight: number, loadDims: [number, number, number]): string[] {
   const [l, w, h] = loadDims;
   const loadVolume = calcVolume(l, w, h);
   const feasible: string[] = [];
 
+  console.log('Checking feasible vehicles for:', {
+    weight: loadWeight,
+    dimensions: loadDims,
+    volume: loadVolume
+  });
+
   for (const [vname, props] of Object.entries(VEHICLES)) {
     const [maxL, maxW, maxH] = props.maxDimensions;
-    if (
+    const canCarry = (
       loadWeight <= props.maxWeight &&
       loadVolume <= props.maxVolume &&
       l <= maxL && w <= maxW && h <= maxH
-    ) {
+    );
+
+    console.log(`Vehicle ${vname}:`, {
+      weightOk: loadWeight <= props.maxWeight,
+      volumeOk: loadVolume <= props.maxVolume,
+      dimensionsOk: l <= maxL && w <= maxW && h <= maxH,
+      canCarry
+    });
+
+    if (canCarry) {
       feasible.push(vname);
     }
   }
 
+  console.log('Feasible vehicles:', feasible);
   return feasible;
 }
 
+// Compute direct P2P metrics
 function computeDirectMetrics(pickup: [number, number], delivery: [number, number], vtype: string) {
   const props = VEHICLES[vtype as keyof typeof VEHICLES];
   const distance = haversine(pickup, delivery);
   const timeMin = (distance / props.speed) * 60.0;
-  const cost = distance * COST_PER_KM[vtype as keyof typeof COST_PER_KM];
+  const cost = distance * props.costPerKm;
+
+  console.log(`Direct P2P for ${vtype}:`, {
+    distance: distance.toFixed(2),
+    time: timeMin.toFixed(1),
+    cost: cost.toFixed(2)
+  });
 
   return {
-    strategy: 'P2P Direct',
+    strategy: 'P2P-Direct',
     hub: null,
     vehicles: { pickupVehicle: vtype, deliveryVehicle: vtype },
     distancesKm: { direct: Math.round(distance * 100) / 100 },
     totalDistance: Math.round(distance * 100) / 100,
     totalTime: Math.round(timeMin * 10) / 10,
     totalCost: Math.round(cost * 100) / 100,
-    optimalRoute: [pickup, delivery]
+    optimalRoute: [pickup, delivery],
+    feasible: distance <= props.maxDist
   };
 }
 
+// Compute hub-and-spoke metrics
 function computeHubSpokeMetrics(pickup: [number, number], delivery: [number, number], vtype: string) {
   const props = VEHICLES[vtype as keyof typeof VEHICLES];
   let best: any = null;
+
+  console.log(`Computing hub-spoke for ${vtype}...`);
 
   for (const [hubName, hubCoord] of Object.entries(HUBS)) {
     const d1 = haversine(pickup, hubCoord);
     const d2 = haversine(hubCoord, delivery);
     const total = d1 + d2;
 
+    console.log(`Hub ${hubName}:`, {
+      pickupToHub: d1.toFixed(2),
+      hubToDelivery: d2.toFixed(2),
+      total: total.toFixed(2),
+      pickupFeasible: d1 <= props.maxDist,
+      deliveryFeasible: d2 <= props.maxDist
+    });
+
     if (d1 <= props.maxDist && d2 <= props.maxDist) {
       if (best === null || total < best.totalDistanceUnrounded) {
         const timeMin = ((d1 + d2) / props.speed) * 60.0 + HANDLING_MIN;
-        const cost = (d1 + d2) * COST_PER_KM[vtype as keyof typeof COST_PER_KM];
+        const cost = (d1 + d2) * props.costPerKm;
         
         best = {
           strategy: 'Hub-and-Spoke',
@@ -138,37 +219,100 @@ function computeHubSpokeMetrics(pickup: [number, number], delivery: [number, num
           totalTime: Math.round(timeMin * 10) / 10,
           totalCost: Math.round(cost * 100) / 100,
           optimalRoute: [pickup, hubCoord, delivery],
-          totalDistanceUnrounded: total
+          totalDistanceUnrounded: total,
+          feasible: true
         };
       }
     }
   }
 
+  if (best) {
+    console.log(`Best hub route for ${vtype}:`, {
+      hub: best.hub,
+      distance: best.totalDistance,
+      cost: best.totalCost
+    });
+  }
+
   return best;
 }
 
+// Calculate optimal route for a vehicle type
 function calculateOptimalRoute(pickup: [number, number], delivery: [number, number], vtype: string) {
+  console.log(`Calculating optimal route for ${vtype}...`);
+  
   const direct = computeDirectMetrics(pickup, delivery, vtype);
   const hub = computeHubSpokeMetrics(pickup, delivery, vtype);
 
   const candidates = [];
-  if (direct) candidates.push(direct);
-  if (hub) candidates.push(hub);
+  if (direct && direct.feasible) candidates.push(direct);
+  if (hub && hub.feasible) candidates.push(hub);
   
-  if (candidates.length === 0) return null;
+  if (candidates.length === 0) {
+    console.log(`No feasible routes for ${vtype}`);
+    return null;
+  }
 
+  // Select best route based on cost
   const best = candidates.reduce((prev, curr) => 
     prev.totalCost < curr.totalCost ? prev : curr
   );
 
-  return {
-    route: best.optimalRoute,
-    distance: best.totalDistance,
-    cost: best.totalCost,
-    time: best.totalTime,
+  console.log(`Best route for ${vtype}:`, {
     strategy: best.strategy,
+    cost: best.totalCost,
+    distance: best.totalDistance,
     hub: best.hub
-  };
+  });
+
+  return best;
+}
+
+// Apply shared pooling discounts
+function applySharedPoolingDiscount(result: any, strategy: 'auto' | 'p2p') {
+  if (strategy === 'p2p') {
+    // No pooling for P2P
+    return {
+      ...result,
+      strategy: 'P2P-Direct',
+      message: 'Success (Direct P2P delivery)',
+      poolingDiscount: 0,
+      originalCost: result.totalCost
+    };
+  }
+
+  // Auto strategy - apply pooling discounts
+  if (result.hub) {
+    // Hub-based shared pooling with 25% discount
+    const poolingDiscount = 0.25;
+    const originalCost = result.totalCost;
+    const sharedCost = originalCost * (1 - poolingDiscount);
+    
+    return {
+      ...result,
+      strategy: 'Hub-Shared-Pooling',
+      totalCost: Math.round(sharedCost * 100) / 100,
+      originalCost: Math.round(originalCost * 100) / 100,
+      poolingDiscount: poolingDiscount,
+      savings: Math.round((originalCost - sharedCost) * 100) / 100,
+      message: `Success (Hub-Shared-Pooling via ${result.hub} - 25% discount applied!)`
+    };
+  } else {
+    // Direct route with smaller discount
+    const poolingDiscount = 0.15;
+    const originalCost = result.totalCost;
+    const sharedCost = originalCost * (1 - poolingDiscount);
+    
+    return {
+      ...result,
+      strategy: 'Direct-Shared-Pooling',
+      totalCost: Math.round(sharedCost * 100) / 100,
+      originalCost: Math.round(originalCost * 100) / 100,
+      poolingDiscount: poolingDiscount,
+      savings: Math.round((originalCost - sharedCost) * 100) / 100,
+      message: `Success (Direct-Shared-Pooling - 15% discount applied!)`
+    };
+  }
 }
 
 // Main logistics algorithm
@@ -180,9 +324,22 @@ export function logisticsAlgorithm(
   loadWidthCm: number,
   loadHeightCm: number,
   deliveryStrategyOption: 'auto' | 'p2p' = 'auto',
-  optimizeBy: 'cost' | 'time' = 'cost'
+  optimizeBy: 'cost' | 'time' = 'cost',
+  vehiclePreference?: string
 ) {
+  console.log('=== LOGISTICS ALGORITHM START ===');
+  console.log('Input parameters:', {
+    pickup,
+    delivery,
+    weight: loadWeightKg,
+    dimensions: [loadLengthCm, loadWidthCm, loadHeightCm],
+    strategy: deliveryStrategyOption,
+    optimizeBy,
+    vehiclePreference
+  });
+
   const loadDims: [number, number, number] = [loadLengthCm, loadWidthCm, loadHeightCm];
+  const loadVolume = calcVolume(loadLengthCm, loadWidthCm, loadHeightCm);
   const feasibleTypes = getFeasibleVehicleTypes(loadWeightKg, loadDims);
 
   const baseFail = {
@@ -196,18 +353,36 @@ export function logisticsAlgorithm(
     totalDistance: null,
     totalTime: null,
     totalCost: null,
+    originalCost: null,
+    savings: null,
+    poolingDiscount: null,
     optimalRoute: null,
+    cargoSpecs: {
+      weight: loadWeightKg,
+      dimensions: loadDims,
+      volume: loadVolume
+    },
     message: 'Shipment not possible'
   };
 
   if (feasibleTypes.length === 0) {
-    return baseFail;
+    console.log('No feasible vehicles found');
+    return { ...baseFail, message: 'No vehicles can handle this cargo size/weight' };
   }
 
-  // Sort feasible types by cost efficiency
-  const sortedTypes = feasibleTypes.sort((a, b) => 
-    COST_PER_KM[a as keyof typeof COST_PER_KM] - COST_PER_KM[b as keyof typeof COST_PER_KM]
-  );
+  // If user has vehicle preference and it's feasible, prioritize it
+  let sortedTypes = [...feasibleTypes];
+  if (vehiclePreference && feasibleTypes.includes(vehiclePreference)) {
+    sortedTypes = [vehiclePreference, ...feasibleTypes.filter(v => v !== vehiclePreference)];
+    console.log('Vehicle preference applied:', vehiclePreference);
+  } else {
+    // Sort by cost efficiency (cheapest first)
+    sortedTypes.sort((a, b) => 
+      VEHICLES[a as keyof typeof VEHICLES].costPerKm - VEHICLES[b as keyof typeof VEHICLES].costPerKm
+    );
+  }
+
+  console.log('Vehicle evaluation order:', sortedTypes);
 
   // Find best route among feasible vehicles
   let bestRoute = null;
@@ -215,116 +390,83 @@ export function logisticsAlgorithm(
 
   for (const vtype of sortedTypes) {
     const route = calculateOptimalRoute(pickup, delivery, vtype);
-    if (route && (bestRoute === null || route.cost < bestRoute.cost)) {
-      bestRoute = route;
-      bestVehicle = vtype;
+    if (route) {
+      const compareValue = optimizeBy === 'cost' ? route.totalCost : route.totalTime;
+      const bestValue = optimizeBy === 'cost' ? bestRoute?.totalCost : bestRoute?.totalTime;
+      
+      if (bestRoute === null || compareValue < bestValue) {
+        bestRoute = route;
+        bestVehicle = vtype;
+      }
     }
   }
 
   if (!bestRoute || !bestVehicle) {
-    return { ...baseFail, message: 'No feasible route found' };
+    console.log('No feasible routes found');
+    return { ...baseFail, message: 'No feasible route found for any vehicle' };
   }
 
-  // For P2P strategy, return direct result
-  if (deliveryStrategyOption === 'p2p') {
-    return {
-      feasibleVehicles: feasibleTypes,
-      selectedVehicle: bestVehicle,
-      vehicleInstanceId: `${bestVehicle}_${Date.now()}`,
-      strategy: 'P2P',
-      hub: bestRoute.hub,
-      vehicles: { pickupVehicle: bestVehicle, deliveryVehicle: bestVehicle },
-      distancesKm: { directOrRouteKm: bestRoute.distance },
-      totalDistance: bestRoute.distance,
-      totalTime: bestRoute.time,
-      totalCost: bestRoute.cost,
-      optimalRoute: bestRoute.route,
-      message: 'Success (P2P assigned)'
-    };
-  }
+  console.log('Best route selected:', {
+    vehicle: bestVehicle,
+    strategy: bestRoute.strategy,
+    cost: bestRoute.totalCost,
+    hub: bestRoute.hub
+  });
 
-  // For auto strategy, simulate shared pooling discount
-  if (deliveryStrategyOption === 'auto') {
-    // Check if route uses hub (shared pooling through hub)
-    const usesHub = bestRoute.hub !== null;
-    
-    if (usesHub) {
-      // Hub-based shared pooling with 25% discount
-      const poolingDiscount = 0.25;
-      const sharedCost = bestRoute.cost * (1 - poolingDiscount);
-      
-      return {
-        feasibleVehicles: feasibleTypes,
-        selectedVehicle: bestVehicle,
-        vehicleInstanceId: `${bestVehicle}_HUB_POOL_${Date.now()}`,
-        strategy: 'Hub-Shared-Pooling',
-        hub: bestRoute.hub,
-        vehicles: { pickupVehicle: bestVehicle, deliveryVehicle: bestVehicle },
-        distancesKm: { 
-          pickupLeg: bestRoute.route.length > 2 ? haversine(bestRoute.route[0], bestRoute.route[1]) : bestRoute.distance,
-          deliveryLeg: bestRoute.route.length > 2 ? haversine(bestRoute.route[1], bestRoute.route[2]) : 0,
-          totalRouteKm: bestRoute.distance 
-        },
-        totalDistance: bestRoute.distance,
-        totalTime: bestRoute.time,
-        totalCost: Math.round(sharedCost * 100) / 100,
-        optimalRoute: bestRoute.route,
-        message: `Success (Hub-Shared-Pooling via ${bestRoute.hub} hub - 25% discount applied!)`
-      };
-    } else {
-      // Direct route with smaller discount
-      const poolingDiscount = 0.15; // 15% discount for direct shared pooling
-      const sharedCost = bestRoute.cost * (1 - poolingDiscount);
-      
-      return {
-        feasibleVehicles: feasibleTypes,
-        selectedVehicle: bestVehicle,
-        vehicleInstanceId: `${bestVehicle}_DIRECT_POOL_${Date.now()}`,
-        strategy: 'Direct-Shared-Pooling',
-        hub: null,
-        vehicles: { pickupVehicle: bestVehicle, deliveryVehicle: bestVehicle },
-        distancesKm: { directRouteKm: bestRoute.distance },
-        totalDistance: bestRoute.distance,
-        totalTime: bestRoute.time,
-        totalCost: Math.round(sharedCost * 100) / 100,
-        optimalRoute: bestRoute.route,
-        message: `Success (Direct-Shared-Pooling - 15% discount applied!)`
-      };
-    }
-  }
+  // Apply shared pooling discounts
+  const finalResult = applySharedPoolingDiscount(bestRoute, deliveryStrategyOption);
 
-  return { ...baseFail, message: `Unknown delivery strategy: ${deliveryStrategyOption}` };
+  // Generate vehicle instance ID
+  const instanceId = `${bestVehicle}_${finalResult.strategy.replace(/[^A-Z0-9]/g, '_')}_${Date.now()}`;
+
+  const result = {
+    feasibleVehicles: feasibleTypes,
+    selectedVehicle: bestVehicle,
+    vehicleInstanceId: instanceId,
+    strategy: finalResult.strategy,
+    hub: finalResult.hub,
+    vehicles: finalResult.vehicles,
+    distancesKm: finalResult.distancesKm,
+    totalDistance: finalResult.totalDistance,
+    totalTime: finalResult.totalTime,
+    totalCost: finalResult.totalCost,
+    originalCost: finalResult.originalCost,
+    savings: finalResult.savings,
+    poolingDiscount: finalResult.poolingDiscount,
+    optimalRoute: finalResult.optimalRoute,
+    cargoSpecs: {
+      weight: loadWeightKg,
+      dimensions: loadDims,
+      volume: loadVolume
+    },
+    algorithmDetails: {
+      evaluatedVehicles: sortedTypes,
+      optimizedBy: optimizeBy,
+      userPreference: vehiclePreference,
+      hubsConsidered: Object.keys(HUBS).length,
+      routeOptions: feasibleTypes.length
+    },
+    message: finalResult.message
+  };
+
+  console.log('=== FINAL RESULT ===');
+  console.log(result);
+  console.log('=== LOGISTICS ALGORITHM END ===');
+
+  return result;
 }
 
-// Geocoding function using Google Maps API
-export async function geocodeAddress(address: string): Promise<[number, number] | null> {
-  try {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyAlMDVtvXh2JDqgh8ok37qOmiIdo7-KLME';
-    if (!apiKey) {
-      console.error('Google Maps API key not found');
-      return null;
-    }
+// Utility function to get hub coordinates
+export function getHubCoordinates(hubName: string): [number, number] | null {
+  return HUBS[hubName] || null;
+}
 
-    console.log('Geocoding address:', address);
-    
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`
-    );
-    
-    const data = await response.json();
-    
-    console.log('Geocoding response:', data);
-    
-    if (data.status === 'OK' && data.results.length > 0) {
-      const location = data.results[0].geometry.location;
-      console.log('Geocoded coordinates:', [location.lat, location.lng]);
-      return [location.lat, location.lng];
-    }
-    
-    console.warn('Geocoding failed:', data.status, data.error_message);
-    return null;
-  } catch (error) {
-    console.error('Geocoding error:', error);
-    return null;
-  }
+// Utility function to get all hubs
+export function getAllHubs(): Record<string, [number, number]> {
+  return { ...HUBS };
+}
+
+// Utility function to get vehicle specifications
+export function getVehicleSpecs(vehicleType: string) {
+  return VEHICLES[vehicleType as keyof typeof VEHICLES] || null;
 }

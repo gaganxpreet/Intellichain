@@ -111,7 +111,7 @@ const BookingForm: React.FC = () => {
       console.log('Geocoded delivery coordinates:', deliveryCoords);
 
       if (!pickupCoords || !deliveryCoords) {
-        alert('Unable to find the specified locations. Please check the addresses and try again.');
+        alert('Unable to find one or both locations. Please check the addresses and try again. Make sure to include city/area details.');
         return;
       }
 
@@ -125,7 +125,8 @@ const BookingForm: React.FC = () => {
         formData.width,
         formData.height,
         formData.strategy,
-        'cost'
+        'cost',
+        formData.vehiclePreference || undefined
       );
 
       console.log('Algorithm result:', result);
@@ -141,7 +142,7 @@ const BookingForm: React.FC = () => {
       });
     } catch (error) {
       console.error('Error calculating quote:', error);
-      alert('Error calculating quote. Please try again.');
+      alert('Error calculating quote. Please check your internet connection and try again.');
     } finally {
       setIsLoading(false);
     }
