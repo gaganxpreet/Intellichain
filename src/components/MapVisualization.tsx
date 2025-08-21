@@ -161,8 +161,8 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
                 <div>
                   🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub<br>
                   Coordinates: ${hubCoord[0].toFixed(6)}, ${hubCoord[1].toFixed(6)}<br>
-                  ${result?.distancesKm?.pickupLeg ? From Pickup: ${result.distancesKm.pickupLeg} km : ''}<br>
-                  ${result?.distancesKm?.deliveryLeg ? To Delivery: ${result.distancesKm.deliveryLeg} km : ''}
+                  ${result?.distancesKm?.pickupLeg ? `From Pickup: ${result.distancesKm.pickupLeg} km` : ''}<br>
+                  ${result?.distancesKm?.deliveryLeg ? `To Delivery: ${result.distancesKm.deliveryLeg} km` : ''}
                 </div>
               `))
               .addTo(map);
