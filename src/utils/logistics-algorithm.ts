@@ -728,3 +728,5 @@ export function getFleetStatus(fleet?: VehicleInstance[]) {
     }, {} as Record<string, { weight: number; volume: number; count: number }>)
   };
 }
+
+export { initializeFleet }
