@@ -380,7 +380,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
   };
 
   return (
-    <div className={relative bg-gray-900 rounded-lg overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : 'h-96'}}>
+    <div className={`relative bg-gray-900 rounded-lg overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : 'h-96'}`}>
       {/* Map Container */}
       <div ref={mapRef} className="w-full h-full" />
 
