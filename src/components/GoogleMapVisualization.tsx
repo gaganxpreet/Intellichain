@@ -1,5 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, Marker, DirectionsRenderer, InfoWindow } from '@react-google-maps/api';
 import { MapPin, Navigation, Maximize2, ToggleLeft, ToggleRight, Route, Info } from 'lucide-react';
 
 interface GoogleMapVisualizationProps {
@@ -9,8 +9,6 @@ interface GoogleMapVisualizationProps {
   hub?: string | null;
   result?: any;
 }
-
-const libraries: ("places" | "geometry")[] = ["places", "geometry"];
 
 const mapContainerStyle = {
   width: '100%',
@@ -166,7 +164,6 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
 
   return (
     <div className={`relative bg-gray-900 rounded-lg overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50' : 'h-96'}`}>
-      <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
           center={center}
@@ -270,7 +267,6 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
             </InfoWindow>
           )}
         </GoogleMap>
-      </LoadScript>
 
       {/* Legend */}
       <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white p-3 rounded-lg text-sm">

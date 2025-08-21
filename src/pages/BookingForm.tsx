@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Package, Truck, Calculator, ArrowRight, Info } from 'lucide-react';
-import { LoadScript } from '@react-google-maps/api';
 import LoadingSpinner from '../components/LoadingSpinner';
 import GooglePlacesAutocomplete from '../components/GooglePlacesAutocomplete';
 import { logisticsAlgorithm, geocodeAddress, initializeFleet, getAllHubs } from '../utils/logistics-algorithm';
@@ -46,7 +45,6 @@ const BookingForm: React.FC = () => {
   const [deliveryCoords, setDeliveryCoords] = useState<[number, number] | null>(null);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const libraries: ("places")[] = ["places"];
 
   // Calculate volume when dimensions change
   useEffect(() => {
@@ -217,7 +215,6 @@ const BookingForm: React.FC = () => {
             </p>
           </div>
 
-          <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
             <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
             {/* Section A: Shipment Details */}
             <div className="p-8 border-b border-gray-100">
@@ -493,7 +490,6 @@ const BookingForm: React.FC = () => {
               </button>
             </div>
           </form>
-          </LoadScript>
         </div>
       </div>
     </div>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Calculator, MapPin, Package, Truck, Route, Clock, IndianRupee, Zap, Target, Info } from 'lucide-react';
-import { LoadScript } from '@react-google-maps/api';
 import GoogleMapVisualization from '../components/GoogleMapVisualization';
 import GooglePlacesAutocomplete from '../components/GooglePlacesAutocomplete';
 import { logisticsAlgorithm, geocodeAddress, getFleetStatus, initializeFleet, getAllHubs } from '../utils/logistics-algorithm';
@@ -59,7 +58,6 @@ const LogisticsOptimizer: React.FC = () => {
   const [deliveryCoords, setDeliveryCoords] = useState<[number, number] | null>(null);
 
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-  const libraries: ("places")[] = ["places"];
 
   // Load fleet status on component mount
   React.useEffect(() => {
@@ -182,7 +180,6 @@ const LogisticsOptimizer: React.FC = () => {
             </p>
           </div>
 
-          <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
             <div className="grid lg:grid-cols-3 gap-8">
             {/* Optimizer Form */}
               <div className="lg:col-span-1">
@@ -574,7 +571,6 @@ const LogisticsOptimizer: React.FC = () => {
               )}
               </div>
             </div>
-          </LoadScript>
         </div>
       </div>
     </div>
