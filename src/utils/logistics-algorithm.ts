@@ -341,27 +341,30 @@ function computeHubSpokeMetrics(pickup: [number, number], delivery: [number, num
 }
 
 // Calculate optimal route for a vehicle type
-function calculateOptimalRoute(pickup: [number, number], delivery: [number, number], vtype: string) {
+function calculateOptimalRoute(pickup: [number, number], delivery: [number, number], vtype: string, strategy: 'auto' | 'p2p' = 'auto') {
   console.log(`Calculating optimal route for ${vtype}...`);
   
   const direct = computeDirectMetrics(pickup, delivery, vtype);
-  const hub = computeHubSpokeMetrics(pickup, delivery, vtype);
+  
+  // Only compute hub routes for Auto-Recommended mode
+  const hub = strategy === 'auto' ? computeHubSpokeMetrics(pickup, delivery, vtype) : null;
 
   const candidates = [];
   if (direct && direct.feasible) candidates.push(direct);
-  if (hub && hub.feasible) candidates.push(hub);
+  if (hub && hub.feasible && strategy === 'auto') candidates.push(hub);
   
   if (candidates.length === 0) {
     console.log(`No feasible routes for ${vtype}`);
     return null;
   }
 
-  // Select best route based on cost
-  const best = candidates.reduce((prev, curr) => 
-    prev.totalCost < curr.totalCost ? prev : curr
-  );
+  // For P2P mode, always use direct route if feasible
+  // For Auto mode, select best route based on cost
+  const best = strategy === 'p2p' 
+    ? direct 
+    : candidates.reduce((prev, curr) => prev.totalCost < curr.totalCost ? prev : curr);
 
-  console.log(`Best route for ${vtype}:`, {
+  console.log(`Best route for ${vtype} (${strategy} mode):`, {
     strategy: best.strategy,
     cost: best.totalCost,
     distance: best.totalDistance,
@@ -492,7 +495,7 @@ export function logisticsAlgorithm(
   let bestVehicleInstance = null;
 
   for (const vtype of sortedTypes) {
-    const route = calculateOptimalRoute(pickup, delivery, vtype);
+    const route = calculateOptimalRoute(pickup, delivery, vtype, deliveryStrategyOption);
     if (route) {
       // Find available vehicle instance of this type
       const availableVehicles = fleet.filter(v => 
@@ -565,6 +568,15 @@ export function logisticsAlgorithm(
         savings: Math.round((originalCost - sharedCost) * 100) / 100
       };
     }
+  } else {
+    // P2P mode - no pooling discounts, use direct cost
+    finalResult = {
+      ...bestRoute,
+      strategy: 'P2P Direct',
+      poolingDiscount: 0,
+      originalCost: undefined,
+      savings: undefined
+    };
   }
 
   // Assign the shipment to the vehicle
@@ -628,7 +640,7 @@ export function logisticsAlgorithm(
       ? (finalResult.hub 
           ? `Success (Hub-Shared-Pooling via ${finalResult.hub} - ${Math.round((finalResult.poolingDiscount || 0) * 100)}% discount applied!)`
           : `Success (Direct-Shared-Pooling - ${Math.round((finalResult.poolingDiscount || 0) * 100)}% discount applied!)`)
-      : 'Success (Direct P2P delivery)'
+      : `Success (Direct P2P delivery - ${finalResult.totalDistance} km, ₹${finalResult.totalCost})`
   };
 
   console.log('=== FINAL RESULT ===');
