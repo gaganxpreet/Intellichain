@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Calculator, MapPin, Package, Truck, Route, Clock, IndianRupee, Zap, Target, Info } from 'lucide-react';
-import MapVisualization from '../components/MapVisualization';
+import { LoadScript } from '@react-google-maps/api';
+import GoogleMapVisualization from '../components/GoogleMapVisualization';
+import GooglePlacesAutocomplete from '../components/GooglePlacesAutocomplete';
 import { logisticsAlgorithm, geocodeAddress, getFleetStatus, initializeFleet, getAllHubs } from '../utils/logistics-algorithm';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -53,6 +55,11 @@ const LogisticsOptimizer: React.FC = () => {
   const [result, setResult] = useState<OptimizationResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fleetStatus, setFleetStatus] = useState<any>(null);
+  const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(null);
+  const [deliveryCoords, setDeliveryCoords] = useState<[number, number] | null>(null);
+
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const libraries: ("places")[] = ["places"];
 
   // Load fleet status on component mount
   React.useEffect(() => {
@@ -70,24 +77,14 @@ const LogisticsOptimizer: React.FC = () => {
     }));
   };
 
-  const handleGeocodeAddress = async (addressType: 'pickup' | 'delivery') => {
-    const address = addressType === 'pickup' ? formData.pickupAddress : formData.deliveryAddress;
-    if (!address.trim()) return;
+  const handlePickupPlaceSelect = (place: { address: string; coordinates: [number, number] }) => {
+    setFormData(prev => ({ ...prev, pickupAddress: place.address, pickupCoords: place.coordinates }));
+    setPickupCoords(place.coordinates);
+  };
 
-    setIsLoading(true);
-    try {
-      const coords = await geocodeAddress(address);
-      if (coords) {
-        setFormData(prev => ({
-          ...prev,
-          [addressType === 'pickup' ? 'pickupCoords' : 'deliveryCoords']: coords
-        }));
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleDeliveryPlaceSelect = (place: { address: string; coordinates: [number, number] }) => {
+    setFormData(prev => ({ ...prev, deliveryAddress: place.address, deliveryCoords: place.coordinates }));
+    setDeliveryCoords(place.coordinates);
   };
 
   const handleOptimize = async (e: React.FormEvent) => {
@@ -107,24 +104,34 @@ const LogisticsOptimizer: React.FC = () => {
       }
 
       // Geocode addresses if not already done
-      let pickupCoords = formData.pickupCoords;
-      let deliveryCoords = formData.deliveryCoords;
+      let finalPickupCoords = pickupCoords || formData.pickupCoords;
+      let finalDeliveryCoords = deliveryCoords || formData.deliveryCoords;
 
-      if (!pickupCoords) {
-        pickupCoords = await geocodeAddress(formData.pickupAddress);
-        if (!pickupCoords) return;
+      if (!finalPickupCoords) {
+        finalPickupCoords = await geocodeAddress(formData.pickupAddress);
+        if (!finalPickupCoords) return;
       }
 
-      if (!deliveryCoords) {
-        deliveryCoords = await geocodeAddress(formData.deliveryAddress);
-        if (!deliveryCoords) return;
+      if (!finalDeliveryCoords) {
+        finalDeliveryCoords = await geocodeAddress(formData.deliveryAddress);
+        if (!finalDeliveryCoords) return;
       }
+
+      // Update form data with final coordinates
+      setFormData(prev => ({
+        ...prev,
+        pickupCoords: finalPickupCoords,
+        deliveryCoords: finalDeliveryCoords
+      }));
+      
+      setPickupCoords(finalPickupCoords);
+      setDeliveryCoords(finalDeliveryCoords);
 
       // Run optimization algorithm
       const fleet = initializeFleet(getAllHubs());
       const optimizationResult = logisticsAlgorithm(
-        pickupCoords,
-        deliveryCoords,
+        finalPickupCoords,
+        finalDeliveryCoords,
         formData.loadWeight,
         formData.loadLength,
         formData.loadWidth,
@@ -141,7 +148,6 @@ const LogisticsOptimizer: React.FC = () => {
       }
 
       setResult(optimizationResult as OptimizationResult);
-      setFormData(prev => ({ ...prev, pickupCoords, deliveryCoords }));
 
     } catch (error) {
       console.error('Optimization error:', error);
@@ -153,6 +159,10 @@ const LogisticsOptimizer: React.FC = () => {
 
   if (isLoading) {
     return <LoadingSpinner message="Optimizing your logistics route..." />;
+  }
+
+  if (!apiKey) {
+    return <div className="min-h-screen flex items-center justify-center"><p>Google Maps API key not configured</p></div>;
   }
 
   return (
@@ -172,6 +182,7 @@ const LogisticsOptimizer: React.FC = () => {
             </p>
           </div>
 
+          <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Optimizer Form */}
             <div className="lg:col-span-1">
@@ -188,27 +199,16 @@ const LogisticsOptimizer: React.FC = () => {
                       <label className="block text-sm font-medium text-blue-100 mb-2">
                         Pickup Address *
                       </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          name="pickupAddress"
+                      <GooglePlacesAutocomplete
                           value={formData.pickupAddress}
-                          onChange={handleInputChange}
+                          onChange={(value) => setFormData(prev => ({ ...prev, pickupAddress: value }))}
+                          onPlaceSelect={handlePickupPlaceSelect}
                           placeholder="Enter pickup location"
-                          className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                          required
+                          className="bg-white/10 border-white/20 text-white placeholder-blue-200 focus:ring-blue-400"
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleGeocodeAddress('pickup')}
-                          className="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                        >
-                          <MapPin className="w-4 h-4" />
-                        </button>
-                      </div>
-                      {formData.pickupCoords && (
+                      {pickupCoords && (
                         <div className="text-xs text-green-400 mt-1">
-                          ✓ Geocoded: {formData.pickupCoords[0].toFixed(6)}, {formData.pickupCoords[1].toFixed(6)}
+                          ✓ Located: {pickupCoords[0].toFixed(6)}, {pickupCoords[1].toFixed(6)}
                         </div>
                       )}
                     </div>
@@ -217,27 +217,16 @@ const LogisticsOptimizer: React.FC = () => {
                       <label className="block text-sm font-medium text-blue-100 mb-2">
                         Delivery Address *
                       </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          name="deliveryAddress"
+                      <GooglePlacesAutocomplete
                           value={formData.deliveryAddress}
-                          onChange={handleInputChange}
+                          onChange={(value) => setFormData(prev => ({ ...prev, deliveryAddress: value }))}
+                          onPlaceSelect={handleDeliveryPlaceSelect}
                           placeholder="Enter delivery location"
-                          className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                          required
+                          className="bg-white/10 border-white/20 text-white placeholder-blue-200 focus:ring-blue-400"
                         />
-                        <button
-                          type="button"
-                          onClick={() => handleGeocodeAddress('delivery')}
-                          className="px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                        >
-                          <MapPin className="w-4 h-4" />
-                        </button>
-                      </div>
-                      {formData.deliveryCoords && (
+                      {deliveryCoords && (
                         <div className="text-xs text-green-400 mt-1">
-                          ✓ Geocoded: {formData.deliveryCoords[0].toFixed(6)}, {formData.deliveryCoords[1].toFixed(6)}
+                          ✓ Located: {deliveryCoords[0].toFixed(6)}, {deliveryCoords[1].toFixed(6)}
                         </div>
                       )}
                     </div>
@@ -508,7 +497,7 @@ const LogisticsOptimizer: React.FC = () => {
                       <p className="text-blue-200">Optimized route visualization with real-time data</p>
                     </div>
                     <div className="h-96">
-                      <MapVisualization
+                      <GoogleMapVisualization
                         pickup={formData.pickupCoords!}
                         delivery={formData.deliveryCoords!}
                         route={result.optimalRoute}
@@ -586,6 +575,7 @@ const LogisticsOptimizer: React.FC = () => {
             </div>
           </div>
         </div>
+        </LoadScript>
       </div>
     </div>
   );

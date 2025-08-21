@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Package, Truck, Calculator, ArrowRight, Info } from 'lucide-react';
+import { LoadScript } from '@react-google-maps/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import GooglePlacesAutocomplete from '../components/GooglePlacesAutocomplete';
 import { logisticsAlgorithm, geocodeAddress, initializeFleet, getAllHubs } from '../utils/logistics-algorithm';
 
 interface BookingFormData {
@@ -40,6 +42,11 @@ const BookingForm: React.FC = () => {
 
   const [feasibleVehicles, setFeasibleVehicles] = useState<string[]>([]);
   const [showVolumeWarning, setShowVolumeWarning] = useState(false);
+  const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(null);
+  const [deliveryCoords, setDeliveryCoords] = useState<[number, number] | null>(null);
+
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  const libraries: ("places")[] = ["places"];
 
   // Calculate volume when dimensions change
   useEffect(() => {
@@ -89,6 +96,16 @@ const BookingForm: React.FC = () => {
     }));
   };
 
+  const handlePickupPlaceSelect = (place: { address: string; coordinates: [number, number] }) => {
+    setFormData(prev => ({ ...prev, pickup: place.address }));
+    setPickupCoords(place.coordinates);
+  };
+
+  const handleDeliveryPlaceSelect = (place: { address: string; coordinates: [number, number] }) => {
+    setFormData(prev => ({ ...prev, delivery: place.address }));
+    setDeliveryCoords(place.coordinates);
+  };
+
   const calculateVolume = () => {
     const volume = formData.length * formData.width * formData.height;
     setFormData(prev => ({ ...prev, volume }));
@@ -114,32 +131,37 @@ const BookingForm: React.FC = () => {
         return;
       }
 
-      // Geocode addresses
-      console.log('Geocoding pickup address...');
-      const pickupCoords = await geocodeAddress(formData.pickup);
-      
-      if (!pickupCoords) {
-        setIsLoading(false);
-        return; // Error already shown in geocodeAddress
+      // Use coordinates from Places Autocomplete or fallback to geocoding
+      let finalPickupCoords = pickupCoords;
+      let finalDeliveryCoords = deliveryCoords;
+
+      if (!finalPickupCoords) {
+        console.log('Geocoding pickup address...');
+        finalPickupCoords = await geocodeAddress(formData.pickup);
+        if (!finalPickupCoords) {
+          setIsLoading(false);
+          return;
+        }
       }
 
-      console.log('Geocoding delivery address...');
-      const deliveryCoords = await geocodeAddress(formData.delivery);
-
-      if (!deliveryCoords) {
-        setIsLoading(false);
-        return;
+      if (!finalDeliveryCoords) {
+        console.log('Geocoding delivery address...');
+        finalDeliveryCoords = await geocodeAddress(formData.delivery);
+        if (!finalDeliveryCoords) {
+          setIsLoading(false);
+          return;
+        }
       }
 
-      console.log('Geocoded pickup coordinates:', pickupCoords);
-      console.log('Geocoded delivery coordinates:', deliveryCoords);
+      console.log('Final pickup coordinates:', finalPickupCoords);
+      console.log('Final delivery coordinates:', finalDeliveryCoords);
 
       console.log('Running logistics algorithm with coordinates...');
       // Run logistics algorithm
       const fleet = initializeFleet(getAllHubs());
       const result = logisticsAlgorithm(
-        pickupCoords,
-        deliveryCoords,
+        finalPickupCoords,
+        finalDeliveryCoords,
         formData.weight,
         formData.length,
         formData.width,
@@ -161,8 +183,8 @@ const BookingForm: React.FC = () => {
       navigate('/quote', { 
         state: { 
           ...formData, 
-          pickupCoords,
-          deliveryCoords,
+          pickupCoords: finalPickupCoords,
+          deliveryCoords: finalDeliveryCoords,
           result 
         } 
       });
@@ -178,6 +200,10 @@ const BookingForm: React.FC = () => {
     return <LoadingSpinner message="Calculating optimal route and pricing..." />;
   }
 
+  if (!apiKey) {
+    return <div className="min-h-screen flex items-center justify-center"><p>Google Maps API key not configured</p></div>;
+  }
+
   return (
     <div className="min-h-screen py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -191,7 +217,8 @@ const BookingForm: React.FC = () => {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+          <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
+            <form onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-2xl overflow-hidden">
             {/* Section A: Shipment Details */}
             <div className="p-8 border-b border-gray-100">
               <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
@@ -204,30 +231,36 @@ const BookingForm: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Pickup Location *
                   </label>
-                  <input
-                    type="text"
-                    name="pickup"
+                  <GooglePlacesAutocomplete
                     value={formData.pickup}
-                    onChange={handleInputChange}
+                    onChange={(value) => setFormData(prev => ({ ...prev, pickup: value }))}
+                    onPlaceSelect={handlePickupPlaceSelect}
                     placeholder="Enter pickup address"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
+                    icon={<MapPin className="w-5 h-5" />}
                   />
+                  {pickupCoords && (
+                    <div className="text-xs text-green-600 mt-1">
+                      ✓ Located: {pickupCoords[0].toFixed(6)}, {pickupCoords[1].toFixed(6)}
+                    </div>
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Delivery Destination *
                   </label>
-                  <input
-                    type="text"
-                    name="delivery"
+                  <GooglePlacesAutocomplete
                     value={formData.delivery}
-                    onChange={handleInputChange}
+                    onChange={(value) => setFormData(prev => ({ ...prev, delivery: value }))}
+                    onPlaceSelect={handleDeliveryPlaceSelect}
                     placeholder="Enter delivery address"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    required
+                    icon={<MapPin className="w-5 h-5" />}
                   />
+                  {deliveryCoords && (
+                    <div className="text-xs text-green-600 mt-1">
+                      ✓ Located: {deliveryCoords[0].toFixed(6)}, {deliveryCoords[1].toFixed(6)}
+                    </div>
+                  )}
                 </div>
 
                 <div className="md:col-span-2">
@@ -460,6 +493,7 @@ const BookingForm: React.FC = () => {
               </button>
             </div>
           </form>
+          </LoadScript>
         </div>
       </div>
     </div>
