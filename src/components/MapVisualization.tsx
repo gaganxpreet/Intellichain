@@ -276,7 +276,7 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
       
       // Add animation
       const pathLength = path.getTotalLength();
-      path.style.strokeDasharray = ${pathLength} ${pathLength};
+      path.style.strokeDasharray = `${pathLength} ${pathLength}`;
       path.style.strokeDashoffset = pathLength.toString();
       path.style.animation = 'dash 2s ease-in-out forwards';
 
