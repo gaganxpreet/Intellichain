@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, MapPin, Truck, Clock, IndianRupee, CheckCircle, Star, Route, Package, Info } from 'lucide-react';
-import MapVisualization from '../components/MapVisualization';
+import GoogleMapComponent from '../components/GoogleMapComponent';
 
 interface QuoteResultsState {
   pickup: string;
@@ -363,15 +363,14 @@ const QuoteResults: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="h-96">
-                  <MapVisualization
+                <GoogleMapComponent
                     pickup={state.pickupCoords}
                     delivery={state.deliveryCoords}
-                    route={result.optimalRoute}
+                    waypoints={result.hub && result.optimalRoute?.length > 2 ? [result.optimalRoute[1]] : []}
                     hub={result.hub}
                     result={result}
+                    height="400px"
                   />
-                </div>
               </div>
 
               {/* Additional Info */}

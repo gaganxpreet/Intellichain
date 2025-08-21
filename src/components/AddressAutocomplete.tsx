@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, Search, X } from 'lucide-react';
-import { PlacesAutocomplete, initializeGoogleMaps } from '../utils/google-maps';
+import { MapPin, Search, X, Loader } from 'lucide-react';
+import { PlacesService, initializeGoogleMaps } from '../utils/google-maps-integration';
 
 interface AddressAutocompleteProps {
   value: string;
@@ -9,6 +9,7 @@ interface AddressAutocompleteProps {
   icon?: React.ReactNode;
   required?: boolean;
   className?: string;
+  label?: string;
 }
 
 const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
@@ -17,12 +18,14 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   placeholder,
   icon,
   required = false,
-  className = ''
+  className = '',
+  label
 }) => {
   const [suggestions, setSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [placesService, setPlacesService] = useState<PlacesAutocomplete | null>(null);
+  const [placesService, setPlacesService] = useState<PlacesService | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
 
@@ -30,9 +33,11 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     const initializePlaces = async () => {
       try {
         await initializeGoogleMaps();
-        setPlacesService(new PlacesAutocomplete());
+        setPlacesService(new PlacesService());
+        console.log('Places service initialized successfully');
       } catch (error) {
         console.error('Failed to initialize Google Maps:', error);
+        setError('Failed to load address suggestions');
       }
     };
 
@@ -57,6 +62,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     onChange(inputValue);
+    setError(null);
 
     if (!placesService || inputValue.length < 3) {
       setSuggestions([]);
@@ -66,12 +72,13 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
 
     setIsLoading(true);
     try {
-      const predictions = await placesService.getSuggestions(inputValue);
+      const predictions = await placesService.getAddressSuggestions(inputValue);
       setSuggestions(predictions);
       setShowSuggestions(true);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       setSuggestions([]);
+      setError('Failed to load suggestions');
     } finally {
       setIsLoading(false);
     }
@@ -80,6 +87,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
   const handleSuggestionClick = async (prediction: google.maps.places.AutocompletePrediction) => {
     if (!placesService) return;
 
+    setIsLoading(true);
     try {
       const placeDetails = await placesService.getPlaceDetails(prediction.place_id);
       const coordinates: [number, number] = [
@@ -90,10 +98,14 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       onChange(prediction.description, coordinates);
       setShowSuggestions(false);
       setSuggestions([]);
+      setError(null);
     } catch (error) {
       console.error('Error fetching place details:', error);
       onChange(prediction.description);
       setShowSuggestions(false);
+      setError('Failed to get location details');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -101,11 +113,18 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
     onChange('');
     setSuggestions([]);
     setShowSuggestions(false);
+    setError(null);
     inputRef.current?.focus();
   };
 
   return (
     <div className={`relative ${className}`}>
+      {label && (
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          {label} {required && <span className="text-red-500">*</span>}
+        </label>
+      )}
+      
       <div className="relative">
         {icon && (
           <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
@@ -119,7 +138,9 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           onChange={handleInputChange}
           placeholder={placeholder}
           required={required}
-          className={`w-full ${icon ? 'pl-12' : 'pl-4'} pr-12 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500`}
+          className={`w-full ${icon ? 'pl-12' : 'pl-4'} pr-12 py-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-gray-900 placeholder-gray-500 ${
+            error ? 'border-red-300 focus:ring-red-500' : ''
+          }`}
           onFocus={() => {
             if (suggestions.length > 0) {
               setShowSuggestions(true);
@@ -127,10 +148,10 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           }}
         />
         
-        {/* Loading or Clear button */}
+        {/* Loading, Clear, or Search button */}
         <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
           {isLoading ? (
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+            <Loader className="w-5 h-5 text-blue-500 animate-spin" />
           ) : value ? (
             <button
               type="button"
@@ -144,6 +165,13 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
           )}
         </div>
       </div>
+
+      {/* Error message */}
+      {error && (
+        <div className="mt-2 text-sm text-red-600">
+          {error}
+        </div>
+      )}
 
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
@@ -175,7 +203,7 @@ const AddressAutocomplete: React.FC<AddressAutocompleteProps> = ({
       )}
 
       {/* No results message */}
-      {showSuggestions && suggestions.length === 0 && !isLoading && value.length >= 3 && (
+      {showSuggestions && suggestions.length === 0 && !isLoading && value.length >= 3 && !error && (
         <div className="absolute z-50 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-4 text-center text-gray-500">
           No locations found. Try a different search term.
         </div>
