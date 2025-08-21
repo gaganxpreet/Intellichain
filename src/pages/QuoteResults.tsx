@@ -57,19 +57,11 @@ const QuoteResults: React.FC = () => {
   };
 
   const getSavingsInfo = () => {
-    if (result.strategy === 'Hub-Shared-Pooling') {
-      const originalCost = result.totalCost / 0.75; // 25% discount
-      const savings = originalCost - result.totalCost;
+    if (result.savings && result.originalCost) {
       return {
-        savings: Math.round(savings * 100) / 100,
-        percentage: 25
-      };
-    } else if (result.strategy === 'Direct-Shared-Pooling') {
-      const originalCost = result.totalCost / 0.85; // 15% discount
-      const savings = originalCost - result.totalCost;
-      return {
-        savings: Math.round(savings * 100) / 100,
-        percentage: 15
+        savings: result.savings,
+        percentage: Math.round((result.poolingDiscount || 0) * 100),
+        originalCost: result.originalCost
       };
     }
     return null;
@@ -118,7 +110,7 @@ const QuoteResults: React.FC = () => {
                   </div>
                   {savingsInfo && (
                     <div className="text-sm opacity-90">
-                      You save ₹{savingsInfo.savings} ({savingsInfo.percentage}% discount)
+                      You save ₹{savingsInfo.savings} ({savingsInfo.percentage}% discount) - Original: ₹{savingsInfo.originalCost}
                     </div>
                   )}
                 </div>
@@ -163,10 +155,10 @@ const QuoteResults: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center justify-between py-3 border-b border-gray-100">
                       <div className="flex items-center">
-                        <Package className="w-5 h-5 text-purple-600 mr-3" />
-                        <span className="text-gray-700">Strategy</span>
+                        <Route className="w-5 h-5 text-purple-600 mr-3" />
+                        <span className="text-gray-700">Route Strategy</span>
                       </div>
                       <span className="font-semibold text-gray-900">{result.strategy}</span>
                     </div>
@@ -182,6 +174,16 @@ const QuoteResults: React.FC = () => {
                             ? result.vehicles.pickupVehicle 
                             : `${result.vehicles.pickupVehicle} → ${result.vehicles.deliveryVehicle}`}
                         </span>
+                      </div>
+                    )}
+
+                    {result.cargoSpecs && (
+                      <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                        <div className="flex items-center">
+                          <Package className="w-5 h-5 text-green-600 mr-3" />
+                          <span className="text-gray-700">Cargo Volume</span>
+                        </div>
+                        <span className="font-semibold text-gray-900">{result.cargoSpecs.volume.toLocaleString()} cm³</span>
                       </div>
                     )}
                   </div>
@@ -208,7 +210,7 @@ const QuoteResults: React.FC = () => {
               </div>
 
               {/* Route Breakdown */}
-              {(result.hub || result.distancesKm?.pickupLeg) && (
+              {result.distancesKm && (
                 <div className="bg-white rounded-2xl shadow-lg p-6 mt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Route Breakdown</h3>
                   <div className="space-y-3">
@@ -247,6 +249,15 @@ const QuoteResults: React.FC = () => {
                       <span>Total Distance:</span>
                       <span>{result.totalDistance} km</span>
                     </div>
+                    {savingsInfo && (
+                      <>
+                        <hr />
+                        <div className="flex justify-between text-green-600 font-semibold">
+                          <span>Total Savings:</span>
+                          <span>₹{savingsInfo.savings} ({savingsInfo.percentage}%)</span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
@@ -281,7 +292,7 @@ const QuoteResults: React.FC = () => {
               </div>
 
               {/* Algorithm Details */}
-              {result.feasibleVehicles && (
+              {result.algorithmDetails && (
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 mt-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                     <Info className="w-5 h-5 text-blue-600 mr-2" />
@@ -303,6 +314,17 @@ const QuoteResults: React.FC = () => {
                             {vehicle} {vehicle === result.selectedVehicle && '✓'}
                           </span>
                         ))}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-600 text-sm">Optimization Details</span>
+                      <div className="text-sm bg-white px-3 py-2 rounded border mt-1">
+                        <div>Optimized by: {result.algorithmDetails.optimizedBy}</div>
+                        <div>Hubs considered: {result.algorithmDetails.hubsConsidered}</div>
+                        <div>Route options: {result.algorithmDetails.routeOptions}</div>
+                        {result.algorithmDetails.userPreference && (
+                          <div>User preference: {result.algorithmDetails.userPreference}</div>
+                        )}
                       </div>
                     </div>
                     {result.vehicleInstanceId && (

@@ -126,9 +126,10 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
             .setLngLat([pickup[1], pickup[0]])
             .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
               <div>
-                📦 Pickup Location<br>
+                <strong>📦 Pickup Location</strong><br>
                 Coordinates: ${pickup[0].toFixed(6)}, ${pickup[1].toFixed(6)}<br>
-                ${result?.vehicles?.pickupVehicle ? `Vehicle: ${result.vehicles.pickupVehicle}`: ''}
+                ${result?.vehicles?.pickupVehicle ? `Vehicle: ${result.vehicles.pickupVehicle}<br>` : ''}
+                ${result?.cargoSpecs ? `Cargo: ${result.cargoSpecs.weight}kg, ${result.cargoSpecs.volume.toLocaleString()}cm³` : ''}
               </div>
             `))
             .addTo(map);
@@ -141,9 +142,10 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
             .setLngLat([delivery[1], delivery[0]])
             .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
               <div>
-                🎯 Delivery Location<br>
+                <strong>🎯 Delivery Location</strong><br>
                 Coordinates: ${delivery[0].toFixed(6)}, ${delivery[1].toFixed(6)}<br>
-                ${result?.vehicles?.deliveryVehicle ? `Vehicle: ${result.vehicles.deliveryVehicle}` : ''}
+                ${result?.vehicles?.deliveryVehicle ? `Vehicle: ${result.vehicles.deliveryVehicle}<br>` : ''}
+                ${result?.totalCost ? `Total Cost: ₹${result.totalCost}` : ''}
               </div>
             `))
             .addTo(map);
@@ -159,10 +161,11 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
               .setLngLat([hubCoord[1], hubCoord[0]])
               .setPopup(new mapboxgl.default.Popup({ offset: 25 }).setHTML(`
                 <div>
-                  🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1)} Hub<br>
+                  <strong>🏢 ${hub.charAt(0).toUpperCase() + hub.slice(1).replace('-', ' ')} Hub</strong><br>
                   Coordinates: ${hubCoord[0].toFixed(6)}, ${hubCoord[1].toFixed(6)}<br>
                   ${result?.distancesKm?.pickupLeg ? `From Pickup: ${result.distancesKm.pickupLeg} km` : ''}<br>
-                  ${result?.distancesKm?.deliveryLeg ? `To Delivery: ${result.distancesKm.deliveryLeg} km` : ''}
+                  ${result?.distancesKm?.deliveryLeg ? `To Delivery: ${result.distancesKm.deliveryLeg} km<br>` : ''}
+                  ${result?.strategy?.includes('Hub') ? `Strategy: ${result.strategy}` : ''}
                 </div>
               `))
               .addTo(map);
@@ -175,10 +178,12 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
                 .setLngLat(coordinates)
                 .setHTML(`
                   <div>
-                    🛣 Route Point<br>
+                    <strong>🛣️ Route Information</strong><br>
                     Coordinates: ${coordinates.lat.toFixed(6)}, ${coordinates.lng.toFixed(6)}<br>
+                    Vehicle: ${result?.selectedVehicle || 'N/A'}<br>
                     Total Distance: ${result?.totalDistance || 'N/A'} km<br>
-                    Estimated Time: ${result?.totalTime || 'N/A'} min
+                    Estimated Time: ${result?.totalTime || 'N/A'} min<br>
+                    Strategy: ${result?.strategy || 'N/A'}
                   </div>
                 `)
                 .addTo(map);
@@ -412,6 +417,8 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
             <div>Time: {result.totalTime} min</div>
             <div>Cost: ₹{result.totalCost}</div>
             <div>Vehicle: {result.selectedVehicle}</div>
+            {result.hub && <div>Hub: {result.hub.replace('-', ' ')}</div>}
+            {result.savings && <div className="text-green-400">Savings: ₹{result.savings}</div>}
           </div>
         </div>
       )}
@@ -463,3 +470,5 @@ const MapVisualization: React.FC<MapVisualizationProps> = ({ pickup, delivery, r
 };
 
 export default MapVisualization;
+
+export default MapVisualization
