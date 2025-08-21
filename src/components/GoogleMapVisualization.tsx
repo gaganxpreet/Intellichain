@@ -34,6 +34,24 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
   const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
   const [directionsUrl, setDirectionsUrl] = useState<string>('');
 
+  // Safe numeric conversion utilities
+  const toNumber = (v: unknown): number => {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+    if (typeof v === 'string') {
+      const n = parseFloat(v.trim());
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+  };
+
+  const sumLegMeters = (route?: google.maps.DirectionsRoute): number => {
+    if (!route?.legs?.length) return 0;
+    const total = route.legs.reduce((m, leg) => m + (leg?.distance?.value ?? 0), 0);
+    return total > 0 ? total : 0;
+  };
+
+  const round2 = (x: number) => Math.round(x * 100) / 100;
+
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
   // Calculate map center and bounds
@@ -160,8 +178,8 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
           
           // Extract real driving distance from all legs
           if (result.routes && result.routes[0] && result.routes[0].legs) {
-            const totalDistanceMeters = result.routes[0].legs.reduce((acc, leg) => acc + (leg.distance?.value || 0), 0);
-            const totalDistanceKm = totalDistanceMeters / 1000;
+            const totalDistanceMeters = sumLegMeters(result.routes[0]);
+            const totalDistanceKm = totalDistanceMeters > 0 ? totalDistanceMeters / 1000 : 0;
             const distance = `${totalDistanceKm.toFixed(1)} km`;
             setRealDrivingDistance(distance);
             setRealDrivingDistanceKm(totalDistanceKm);
@@ -399,17 +417,18 @@ const GoogleMapVisualization: React.FC<GoogleMapVisualizationProps> = ({
             <div>Time: {result.totalTime} min</div>
             <div>Cost: ₹{(() => {
               if (realDrivingDistanceKm > 0) {
-                const ratePerKm = result.selectedVehicle === '2W' ? 7 : 
-                                 result.selectedVehicle === 'Van' ? 18 : 
-                                 result.selectedVehicle === 'Tempo' ? 25 : 35;
-                const km = realDrivingDistanceKm || 0;
-                const rate = ratePerKm || 0;
-                const baseCost = km * rate;
-                const discount = result.poolingDiscount || 0;
+                const ratePerKm = toNumber(
+                  result.selectedVehicle === '2W' ? 7 : 
+                  result.selectedVehicle === 'Van' ? 18 : 
+                  result.selectedVehicle === 'Tempo' ? 25 : 35
+                );
+                const km = toNumber(realDrivingDistanceKm);
+                const discount = toNumber(result.poolingDiscount);
+                const baseCost = km * ratePerKm;
                 const finalCost = baseCost * (1 - discount);
-                return Math.round(finalCost);
+                return round2(finalCost);
               }
-              return result.totalCost || 0;
+              return toNumber(result.totalCost);
             })()}</div>
             <div>Vehicle: {result.selectedVehicle}</div>
             {result.hub && <div>Hub: {result.hub.replace('-', ' ')}</div>}

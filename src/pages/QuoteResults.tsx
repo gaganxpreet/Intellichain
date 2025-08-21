@@ -30,18 +30,31 @@ const QuoteResults: React.FC = () => {
   const [realDrivingDistance, setRealDrivingDistance] = useState<number>(0);
   const [updatedCost, setUpdatedCost] = useState<number>(0);
 
+  // Safe numeric conversion utilities
+  const toNumber = (v: unknown): number => {
+    if (typeof v === 'number') return Number.isFinite(v) ? v : 0;
+    if (typeof v === 'string') {
+      const n = parseFloat(v.trim());
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+  };
+
+  const round2 = (x: number) => Math.round(x * 100) / 100;
+
   // Update cost when real driving distance is available
   useEffect(() => {
     if (realDrivingDistance > 0 && result) {
-      const ratePerKm = result.selectedVehicle === '2W' ? 7 : 
-                        result.selectedVehicle === 'Van' ? 18 : 
-                        result.selectedVehicle === 'Tempo' ? 25 : 35;
-      const km = realDrivingDistance || 0;
-      const rate = ratePerKm || 0;
-      const baseCost = km * rate;
-      const discount = result.poolingDiscount || 0;
+      const ratePerKm = toNumber(
+        result.selectedVehicle === '2W' ? 7 : 
+        result.selectedVehicle === 'Van' ? 18 : 
+        result.selectedVehicle === 'Tempo' ? 25 : 35
+      );
+      const km = toNumber(realDrivingDistance);
+      const discount = toNumber(result.poolingDiscount);
+      const baseCost = km * ratePerKm;
       const finalCost = baseCost * (1 - discount);
-      setUpdatedCost(Math.round(finalCost));
+      setUpdatedCost(round2(finalCost));
     }
   }, [realDrivingDistance, result]);
 
