@@ -154,7 +154,7 @@ const QuoteResults: React.FC = () => {
                     <div className="flex items-center justify-center mb-2">
                       <IndianRupee className="w-8 h-8 text-gray-700 mr-1" />
                       <span className="text-4xl font-bold text-gray-900">
-                        {updatedCost > 0 ? updatedCost : result.totalCost || 0}
+                        {updatedCost > 0 ? updatedCost : toNumber(result.totalCost)}
                       </span>
                     </div>
                     <p className="text-gray-600">Total Shipping Cost</p>
