@@ -23,6 +23,7 @@ const QuoteResults: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as QuoteResultsState;
+  const { result } = state;
   const [isConfirming, setIsConfirming] = useState(false);
 
   // State for real driving distance from Google Maps
@@ -54,7 +55,7 @@ const QuoteResults: React.FC = () => {
     return null;
   }
 
-  const { result } = state;
+
 
   const handleConfirmBooking = () => {
     setIsConfirming(true);
