@@ -110,6 +110,7 @@ class VehicleInstance {
   cls: VehicleClass;
   currentLocation: [number, number];
   homeHub: string;
+  driverUserId?: string;
   remainingCapacityKg: number;
   remainingCapacityVolume: number;
   assignedRoute: [number, number][];
@@ -120,6 +121,7 @@ class VehicleInstance {
     this.cls = VEHICLE_CLASSES[typeName];
     this.currentLocation = currentLocation;
     this.homeHub = homeHub;
+    this.driverUserId = undefined;
     this.remainingCapacityKg = this.cls.maxWeight;
     this.remainingCapacityVolume = this.cls.maxVolume;
     this.assignedRoute = [];
@@ -372,32 +374,50 @@ function calculateOptimalRoute(pickup: [number, number], delivery: [number, numb
 }
 
 // Fleet Initialization
-function initializeFleet(hubs: Record<string, [number, number]>): VehicleInstance[] {
+export function initializeFleet(hubs: Record<string, [number, number]>): VehicleInstance[] {
   const fleet: VehicleInstance[] = [];
+  
+  // Use the provided driver user ID for vehicle assignments
+  const driverUserId = '14442bd0-d748-471a-af89-cf819da6a13e';
   
   for (const [hubName, coord] of Object.entries(hubs)) {
     // Add Vans
     for (let i = 1; i <= 3; i++) {
       const vid = `VAN_${hubName.substring(0, 3).toUpperCase()}_${i.toString().padStart(3, '0')}`;
-      fleet.push(new VehicleInstance(vid, 'Van', coord, hubName));
+      const vehicle = new VehicleInstance(vid, 'Van', coord, hubName);
+      // Assign driver for first vehicle of each type at each hub
+      if (i === 1) {
+        vehicle.driverUserId = driverUserId;
+      }
+      fleet.push(vehicle);
     }
     
     // Add Tempos
     for (let i = 1; i <= 2; i++) {
       const vid = `TEMPO_${hubName.substring(0, 3).toUpperCase()}_${i.toString().padStart(3, '0')}`;
-      fleet.push(new VehicleInstance(vid, 'Tempo', coord, hubName));
+      const vehicle = new VehicleInstance(vid, 'Tempo', coord, hubName);
+      if (i === 1) {
+        vehicle.driverUserId = driverUserId;
+      }
+      fleet.push(vehicle);
     }
     
     // Add Trucks
     for (let i = 1; i <= 1; i++) {
       const vid = `TRUCK_${hubName.substring(0, 3).toUpperCase()}_${i.toString().padStart(3, '0')}`;
-      fleet.push(new VehicleInstance(vid, 'Truck', coord, hubName));
+      const vehicle = new VehicleInstance(vid, 'Truck', coord, hubName);
+      vehicle.driverUserId = driverUserId;
+      fleet.push(vehicle);
     }
     
     // Add 2-Wheelers
     for (let i = 1; i <= 4; i++) {
       const vid = `2W_${hubName.substring(0, 3).toUpperCase()}_${i.toString().padStart(3, '0')}`;
-      fleet.push(new VehicleInstance(vid, '2W', coord, hubName));
+      const vehicle = new VehicleInstance(vid, '2W', coord, hubName);
+      if (i === 1) {
+        vehicle.driverUserId = driverUserId;
+      }
+      fleet.push(vehicle);
     }
   }
   
