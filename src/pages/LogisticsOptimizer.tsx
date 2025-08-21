@@ -533,6 +533,7 @@ const LogisticsOptimizer: React.FC = () => {
                         route={result.optimalRoute}
                         hub={result.hub}
                         result={result}
+                        onDistanceUpdate={(distanceKm) => setRealDrivingDistance(distanceKm)}
                       />
                     </div>
                   </div>
